@@ -1,0 +1,39 @@
+IO-Socket-TIPC version 0.01
+=====================================
+
+This is a TIPC (Transparent Inter-Process Communication) module for perl.  See
+http://tipc.sf.net/ if you don't know what this is.
+
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+The Scalar::Util, Switch, and Test::Exception perl modules are required.
+This runs under a linux kernel which has TIPC enabled.  If you built TIPC as
+a module, be sure you've loaded it with the "modprobe" command.
+
+I'm unaware of TIPC being supported for any platform other than Linux at
+present, patches are welcome.
+
+For building, it must be able to find the header file <linux/tipc.h>.  It will
+try /usr/include and a couple of well-known kernel locations before giving up.
+
+
+AUTHOR
+
+Mark Glines <mark-tipc@glines.org>
+
+COPYRIGHT AND LICENSE
+
+This module is licensed under a dual BSD/GPL license, the same terms as TIPC
+itself.

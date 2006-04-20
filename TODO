@@ -1,0 +1,6 @@
+1.  Implement sendto() and recvfrom() methods, for connection-less sockets.
+2.  Write tests for connection-less sockets, make sure they work.
+3.  Exhaustive documentation of ->new() parameters, for TIPC.pm and Sockaddr.pm
+4.  More examples.
+5.  Check the XS exhaustively for memory leaks.
+6.  Currently we don't allow binding to a local name, for connection sockets.  Determine whether this should be allowed or not.

@@ -1,0 +1,21 @@
+Changes
+MANIFEST
+Makefile.PL
+Programmers_Guide.txt
+README
+TIPC.xs
+TODO
+examples/recv.pl
+examples/send.pl
+fallback/const-c.inc
+fallback/const-xs.inc
+lib/IO/Socket/TIPC.pm
+lib/IO/Socket/TIPC/Sockaddr.pm
+ppport.h
+t/constants.t
+t/sock_dgram.t
+t/sock_rdm.t
+t/sock_seqpacket.t
+t/sock_stream.t
+t/sockaddr.t
+META.yml                                 Module meta-data (added by MakeMaker)
