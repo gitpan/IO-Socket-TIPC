@@ -11,7 +11,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 NAME
 
@@ -232,7 +232,7 @@ Examples of connectionless socket use:
 
 	# send a hello packet from sock2 to sock1
 	$addr1 = IO::Socket::TIPC::Sockaddr->new("{4242, 100}");
-	$sock2->sendto($addr1, $data, length($data));
+	$sock2->sendto($addr1, $data);
 
 	# receive that first hello packet
 	$sender_addr = $sock1->recvfrom($rxdata, 256);
@@ -298,13 +298,13 @@ sub configure {
 		$connectionless = 1 if $$args{SocketType} == SOCK_RDM;
 		$connectionless = 1 if $$args{SocketType} == SOCK_DGRAM;
 	}
-	croak "Connectionless socket types cannot listen()."
+	croak "Connectionless socket types cannot listen(), but you've told me to Listen."
 		if($connectionless && $listener);
-	croak "Connectionless socket types cannot connect()."
+	croak "Connectionless socket types cannot connect(), but you've given me a Peer address."
 		if($connectionless && $connector);
-	croak "Listener sockets cannot connect."
+	croak "Listener sockets cannot connect, but you've given me a Peer address."
 		if($listener && $connector);
-	croak "Connector sockets cannot bind."
+	croak "Connect()ing sockets cannot bind, but you've given me a Local address."
 		if($connector && $binder);
 
 	# If we've gotten this far, I figure everything is ok.
@@ -380,6 +380,69 @@ sub fixup_args {
 		}
 	}
 	return 1;
+}
+
+
+=head1 METHODS
+
+=head2 sendto(addr, message [, flags])
+
+B<sendto> is used with connectionless sockets, to send a message to a given
+address.  The addr parameter should be an IO::Socket::TIPC::Sockaddr object.
+
+	my $addr = IO::Socket::TIPC::Sockaddr->new("{4242, 100}");
+	$sock->sendto($addr, "Hello there!\n");
+
+You may have noticed that B<sendto> and Perl's builtin B<send> do more or
+less the same thing with the order of arguments changed.  The main reason to
+use B<sendto> is because you can pass it a IO::Socket::TIPC::Sockaddr object
+directly, where B<send> requires you to call its ->B<raw>() method to get at
+the raw binary "struct sockaddr_tipc" data.  So, B<sendto> is just a matter of
+convenience.
+
+Ironically, this B<sendto> method calls perl's B<send> builtin, which in turn
+calls the C B<sendto> function.
+
+=cut
+
+sub sendto {
+	my ($self, $addr, $message, $flags) = @_;
+	croak "sendto given an undef message" unless defined $message;
+	croak "sendto given a non-address?"
+		unless ref($addr) eq "IO::Socket::TIPC::Sockaddr";
+	$flags = 0 unless defined $flags;
+	return $self->send($message, $flags, $addr->raw());
+}
+
+
+=head2 recvfrom(buffer, length [, flags])
+
+B<recvfrom> is used with connectionless sockets, to receive a message from
+a peer.  It returns a IO::Socket::TIPC::Sockaddr object, containing the
+address of the message's sender.  B<NOTE!>  You must pass a *REFERENCE* to
+the buffer, since it will be written to.
+
+	my $buffer;
+	my $sender = $sock->recvfrom(\$buffer, 30);
+	$sock->sendto($sender, "I got your message.");
+
+You may have noticed that B<recvfrom> and Perl's builtin B<recv> do more or
+less the same thing with the order of arguments changed.  The main reason to
+use B<recvfrom> is because it will return a IO::Socket::TIPC::Sockaddr object,
+where B<recv> just returns a binary blob containing the C "struct
+sockaddr_tipc" data.
+
+Ironically, this B<recvfrom> method calls perl's B<recv> builtin, which in
+turn calls the C B<recvfrom> function.
+
+=cut
+
+sub recvfrom {
+	# note: the $buffer argument is written to by recv().
+	my ($self, $buffer, $length, $flags) = @_;
+	$flags = 0 unless defined $flags;
+	my $rv = $self->recv($_[1], $length, $flags);
+	return IO::Socket::TIPC::Sockaddr->new_from_data($rv);
 }
 
 

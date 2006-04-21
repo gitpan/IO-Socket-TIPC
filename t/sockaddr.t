@@ -2,9 +2,11 @@ use strict;
 use warnings;
 use IO::Socket::TIPC;
 use Test::More;
-use Test::Exception;
+BEGIN { use_ok('Test::Exception'); }
 my $tests;
 BEGIN { $tests = 0 };
+
+my $test_exception_loaded = defined($Test::Exception::VERSION);
 
 ## NAME
 # basic
@@ -70,25 +72,28 @@ ok($sockaddr,                             "pieces were accepted");
 is($sockaddr->stringify(), "{42420, 10}", "pieces parsed correctly");
 is($$sockaddr{Scope},      3,             "scope is set properly");
 
-# catch forgetting to pass Type arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name',Instance => 100)
-	}, qr/requires a Type value/, "catches a forgotten Type argument");
-
-# catch the wrong AddrType
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Type => 4242, Instance => 100)
-	}, qr/not valid for AddrType id/, "catches an incorrect AddrType");
-
-# catch mistakenly passing in Upper arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Type => 4242, Instance => 100, Upper => 1000)
-	}, qr/Upper not valid for AddrType name/, "catches a mistaken Upper argument");
-
-# catch mistakenly passing in Nonexistent arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Type => 4242, Instance => 100, Nonexistent => 1000)
-	}, qr/unknown argument Nonexistent/, "catches an erroneous Nonexistent argument");
+SKIP: {
+	skip "need Test::Exception", 4 unless $test_exception_loaded;
+	# catch forgetting to pass Type arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name',Instance => 100)
+		}, qr/requires a Type value/, "catches a forgotten Type argument");
+	
+	# catch the wrong AddrType
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Type => 4242, Instance => 100)
+		}, qr/not valid for AddrType id/, "catches an incorrect AddrType");
+	
+	# catch mistakenly passing in Upper arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Type => 4242, Instance => 100, Upper => 1000)
+		}, qr/Upper not valid for AddrType name/, "catches a mistaken Upper argument");
+	
+	# catch mistakenly passing in Nonexistent arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Type => 4242, Instance => 100, Nonexistent => 1000)
+		}, qr/unknown argument Nonexistent/, "catches an erroneous Nonexistent argument");
+}
 BEGIN { $tests += 38 };
 
 ## NAMESEQ
@@ -129,25 +134,28 @@ ok($sockaddr,                                   "pieces were accepted");
 is($sockaddr->stringify(), "{42420, 101, 102}", "pieces parsed correctly");
 is($$sockaddr{Scope},      3,                   "scope is set properly");
 
-# catch forgetting to pass Type arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'nameseq',Lower => 100)
-	}, qr/requires a Type value/, "catches a forgotten Type argument");
-
-# catch the wrong AddrType
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Type => 4242, Lower => 100)
-	}, qr/not valid for AddrType name/, "catches an incorrect AddrType");
-
-# catch mistakenly passing in Ref arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'nameseq', Type => 4242, Lower => 100, Ref => 1000)
-	}, qr/Ref not valid for AddrType nameseq/, "catches a mistaken Ref argument");
-
-# catch mistakenly passing in Nonexistent arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'nameseq', Type => 4242, Lower => 100, Nonexistent => 1000)
-	}, qr/unknown argument Nonexistent/, "catches an erroneous Nonexistent argument");
+SKIP: {
+	skip "need Test::Exception", 4 unless $test_exception_loaded;
+	# catch forgetting to pass Type arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'nameseq',Lower => 100)
+		}, qr/requires a Type value/, "catches a forgotten Type argument");
+	
+	# catch the wrong AddrType
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Type => 4242, Lower => 100)
+		}, qr/not valid for AddrType name/, "catches an incorrect AddrType");
+	
+	# catch mistakenly passing in Ref arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'nameseq', Type => 4242, Lower => 100, Ref => 1000)
+		}, qr/Ref not valid for AddrType nameseq/, "catches a mistaken Ref argument");
+	
+	# catch mistakenly passing in Nonexistent arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'nameseq', Type => 4242, Lower => 100, Nonexistent => 1000)
+		}, qr/unknown argument Nonexistent/, "catches an erroneous Nonexistent argument");
+}
 BEGIN { $tests += 23 };
 
 
@@ -197,25 +205,28 @@ ok($sockaddr,                                 "pieces were accepted without Addr
 is($sockaddr->stringify(), "<1.2.3:0>",       "Reference is 0 by default");
 is($$sockaddr{AddrType},   "id",              "guessed AddrType=id correctly");
 
-# catch forgetting to pass Node arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Zone => 1, Cluster => 2, Ref => 4);
-	}, qr/requires a Node value/, "catches a forgotten Node argument");
-
-# catch the wrong AddrType
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Zone => 1, Cluster => 2, Node => 3, Ref => 4);
-	}, qr/not valid for AddrType name/, "catches an incorrect AddrType");
-
-# catch mistakenly passing in Upper arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Zone => 1, Cluster => 2, Node => 3, Ref => 4, Upper => 1000);
-	}, qr/Upper not valid for AddrType id/, "catches a mistaken Upper argument");
-
-# catch mistakenly passing in Nonexistent arg
-throws_ok( sub {
-	$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Zone => 1, Cluster => 2, Node => 3, Ref => 4, Nonexistent => 1000);
-	}, qr/unknown argument Nonexistent/, "catches an erroneous Nonexistent argument");
+SKIP: {
+	skip "need Test::Exception", 4 unless $test_exception_loaded;
+	# catch forgetting to pass Node arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Zone => 1, Cluster => 2, Ref => 4);
+		}, qr/requires a Node value/, "catches a forgotten Node argument");
+	
+	# catch the wrong AddrType
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'name', Zone => 1, Cluster => 2, Node => 3, Ref => 4);
+		}, qr/not valid for AddrType name/, "catches an incorrect AddrType");
+	
+	# catch mistakenly passing in Upper arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Zone => 1, Cluster => 2, Node => 3, Ref => 4, Upper => 1000);
+		}, qr/Upper not valid for AddrType id/, "catches a mistaken Upper argument");
+	
+	# catch mistakenly passing in Nonexistent arg
+	throws_ok( sub {
+		$sockaddr = IO::Socket::TIPC::Sockaddr->new(AddrType => 'id', Zone => 1, Cluster => 2, Node => 3, Ref => 4, Nonexistent => 1000);
+		}, qr/unknown argument Nonexistent/, "catches an erroneous Nonexistent argument");
+}
 BEGIN { $tests += 31 };
 
 

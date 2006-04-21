@@ -8,19 +8,19 @@ BEGIN { $tests = 0; };
 my $Type = 0x73570000 + $$;
 
 # Long API.
+# Create a server
+# SOCKET CREATION.  almost straight from the POD examples...
+my $sock1 = IO::Socket::TIPC->new(
+	SocketType => 'stream',
+	Listen => 1,
+	LocalAddrType => 'name',
+	LocalType => $Type,
+	LocalInstance => 73570101,
+	LocalScope => 'node',
+);
+ok(defined($sock1), "Create a server socket");
 if(fork()) {
 	# server (and test) process.
-	# SOCKET CREATION.  almost straight from the POD examples...
-	# Create a server
-	my $sock1 = IO::Socket::TIPC->new(
-		SocketType => 'stream',
-		Listen => 1,
-		LocalAddrType => 'name',
-		LocalType => $Type,
-		LocalInstance => 73570101,
-		LocalScope => 'node',
-	);
-	ok(defined($sock1), "Create a server socket");
 	alarm(5);
 	my $sock2 = $sock1->accept();
 	ok(defined($sock2), "Client connected");
@@ -29,32 +29,30 @@ if(fork()) {
 	like($sock2->getline(), qr/hello yourself/, "Client replied to our message");
 } else {
 	# child process
-	# give the server time to set up
-	sleep(1);
+	alarm(5);
 	# Connect to the above server
-	my $sock1 = IO::Socket::TIPC->new(
+	my $sock2 = IO::Socket::TIPC->new(
 		SocketType => 'stream',
 		PeerAddrType => 'name',
 		PeerType => $Type,
 		PeerInstance => 73570101,
 		PeerDomain => '<0.0.0>',
 	);
-	my $string = $sock1->getline();
+	my $string = $sock2->getline();
 	if($string =~ /Hello/) {
-		$sock1->print("Well, hello yourself!\n");
+		$sock2->print("Well, hello yourself!\n");
 	}
 	exit(0);
 }
 BEGIN { $tests += 3; }
 
 # Same thing again, this time with the short API.
+# Create a server
+$sock1 = IO::Socket::TIPC->new(
+	SocketType => 'stream', Listen => 1, Local => "{$Type, 73570102}");
+ok(defined($sock1), "Create a server socket");
 if(fork()) {
 	# server (and test) process.
-	# SOCKET CREATION.  almost straight from the POD examples...
-	# Create a server
-	my $sock1 = IO::Socket::TIPC->new(
-		SocketType => 'stream', Listen => 1, Local => "{$Type, 73570102}");
-	ok(defined($sock1), "Create a server socket");
 	alarm(5);
 	my $sock2 = $sock1->accept();
 	ok(defined($sock2), "Client connected");
@@ -63,14 +61,13 @@ if(fork()) {
 	like($sock2->getline(), qr/you again/i, "Client replied to our message");
 } else {
 	# child process
-	# give the server time to set up
-	sleep(1);
+	alarm(5);
 	# Connect to the above server
-	my $sock1 = IO::Socket::TIPC->new(
+	my $sock2 = IO::Socket::TIPC->new(
 		SocketType => 'stream', Peer => "{$Type, 73570102}");
-	my $string = $sock1->getline();
+	my $string = $sock2->getline();
 	if($string =~ /Hello/) {
-		$sock1->print("You again?\n");
+		$sock2->print("You again?\n");
 	}
 	exit(0);
 }

@@ -4,7 +4,7 @@
 
 #include "ppport.h"
 
-#include <linux/tipc.h>
+#include "tipc.h"
 
 #include "const-c.inc"
 
