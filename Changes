@@ -25,3 +25,22 @@ Revision history for Perl extension IO::Socket::TIPC.
 	  have Test::Exception installed.  Since we run without it, remove it from
 	  the list of dependencies.
 	- Release 0.03.
+
+0.04  Fri Apr 21 09:10:00 PDT 2006
+	- Allan Stephens reported a couple of missing constants.  I went and
+	  grabbed a copy of tipc-1.5.10, its TIPC is missing PF_TIPC, TIPC_CFG_SRV,
+	  TIPC_TOP_SRV and TIPC_RESERVED_NODES.
+	  In the interests of maximum portability, I'm making missing constants a
+	  nonfatal error; the constant just returns 'undef' if it wasn't defined in
+	  tipc.h.  Also, PF_TIPC is rather important, so I've conditionally defined
+	  it to AF_TIPC in TIPC.xs when found to be undefined.  (linux-2.6.16's
+	  tipc.h defines it the same way.)
+	- Added an extra set of tests, to ensure useful return values from those
+	  constants the TIPC module uses internally.  (Currently, a very small
+	  subset of the full list.)
+	- The socket(2) manpage indicates its first field should be a PF_* value,
+	  not AF_*.  Switch TIPC.pm to use PF_TIPC.
+	- Fix Sockaddr's _stringify() XS method, to print everything as unsigned
+	  integers.  This is rather important; portid references are 32-bit and
+	  they seem to be randomly generated, so the high bit is set half of the
+	  time.

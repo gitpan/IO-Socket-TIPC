@@ -11,7 +11,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 NAME
 
@@ -123,7 +123,7 @@ sub AUTOLOAD {
     ($constname = $AUTOLOAD) =~ s/.*:://;
     croak "&IO::Socket::TIPC::constant not defined" if $constname eq 'constant';
     my ($error, $val) = constant($constname);
-    if ($error) { croak $error; }
+    if ($error) { $val = undef; } # undefined constants just return undef.
     {
 	no strict 'refs';
 	    *$AUTOLOAD = sub { $val };
@@ -309,7 +309,7 @@ sub configure {
 
 	# If we've gotten this far, I figure everything is ok.
 	# unless Sockaddr barfs, of course.
-	$socket->socket(AF_TIPC(), $$args{SocketType}, 0)
+	$socket->socket(PF_TIPC(), $$args{SocketType}, 0)
 		or croak "Could not create socket: $!";
 	if($binder) {
 		my $baddr;
@@ -450,7 +450,7 @@ sub recvfrom {
 use XSLoader;
 XSLoader::load('IO::Socket::TIPC', $VERSION);
 
-IO::Socket::TIPC->register_domain(AF_TIPC());
+IO::Socket::TIPC->register_domain(PF_TIPC());
 
 my @TIPC_STUFF = ( qw(
 	AF_TIPC PF_TIPC SOL_TIPC TIPC_ADDR_ID TIPC_ADDR_MCAST TIPC_ADDR_NAME

@@ -6,6 +6,12 @@
 
 #include "tipc.h"
 
+#ifndef PF_TIPC
+# ifdef AF_TIPC
+#  define PF_TIPC AF_TIPC
+# endif
+#endif
+
 #include "const-c.inc"
 
 MODULE = IO::Socket::TIPC		PACKAGE = IO::Socket::TIPC
@@ -130,16 +136,16 @@ _stringify(sv)
 			RETVAL = newSVpvf("(uninitialized addrtype)");
 			break;
 		  case TIPC_ADDR_ID: /* by TIPC address and ref-id */
-			RETVAL = newSVpvf("<%i.%i.%i:%i>",tipc_zone(sat->addr.id.node),
+			RETVAL = newSVpvf("<%u.%u.%u:%u>",tipc_zone(sat->addr.id.node),
 				tipc_cluster(sat->addr.id.node),tipc_node(sat->addr.id.node),
 				sat->addr.id.ref);
 			break;
 		  case TIPC_ADDR_NAME: /* by port (NOTE: "domain" isn't shown) */
-			RETVAL = newSVpvf("{%i, %i}",sat->addr.name.name.type,
+			RETVAL = newSVpvf("{%u, %u}",sat->addr.name.name.type,
 				sat->addr.name.name.instance);
 			break;
 		  case TIPC_ADDR_NAMESEQ: /* multicast port range */
-			RETVAL = newSVpvf("{%i, %i, %i}",sat->addr.nameseq.type,
+			RETVAL = newSVpvf("{%u, %u, %u}",sat->addr.nameseq.type,
 				sat->addr.nameseq.lower,sat->addr.nameseq.upper);
 			break;
 		  default:
