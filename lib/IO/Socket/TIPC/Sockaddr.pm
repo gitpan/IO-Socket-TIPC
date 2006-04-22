@@ -7,7 +7,7 @@ use Switch;
 
 =head1 NAME
 
-IO::Socket::TIPC::Sockaddr - struct sockaddr_tipc object
+IO::Socket::TIPC::Sockaddr - struct sockaddr_tipc class
 
 =head1 SYNOPSIS
 
@@ -19,6 +19,106 @@ IO::Socket::TIPC::Sockaddr - struct sockaddr_tipc object
 TIPC Sockaddrs are used with TIPC sockets, to specify local or remote
 endpoints for communication.  They are used in the bind(), connect(),
 sendto() and recvfrom() calls.
+
+Sockaddrs can be broken down into 3 address-types, "name", "nameseq"
+and "id". the Programmers_Guide.txt explains this stuff much better than
+I ever could, you should read it.
+
+=head2 name
+
+You can use "name" sockets in the following manner:
+
+	$name = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'name',
+		Type => 4242,
+		Instance => 1005);
+
+Or
+
+	$name = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'name',
+		Name => '{4242, 1005}');
+
+Or, even
+
+	$name = IO::Socket::TIPC::Sockaddr->new('{4242, 1005}');
+
+With all address types, the stringify() method will return something
+readable.
+
+	$string = $name->stringify();
+	# stringify returns "{4242, 1005}"
+
+
+=head2 nameseq
+
+You can use "nameseq" sockets in the following manner:
+
+	$nameseq = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'nameseq',
+		Type     => 4242,
+		Lower    => 100,
+		Upper    => 1000);
+
+Or, more simply,
+
+	$nameseq = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'nameseq',
+		Name     => '{4242, 100, 1000}');
+
+Or even just
+
+	$nameseq = IO::Socket::TIPC::Sockaddr->new('{4242, 100, 1000}');
+
+If you don't specify an B<Upper>, it defaults to the B<Lower>.  If you
+don't specify a B<Lower>, it defaults to the B<Upper>.  You must
+specify at least one.
+
+	$nameseq = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'nameseq',
+		Type => 4242,
+		Lower => 100);
+
+With all address types, the stringify() method will return something
+readable.
+
+	$string = $nameseq->stringify();
+	# stringify returns "{4242, 100, 100}"
+
+
+=head2 id
+
+You can use "id" sockets in the following manner:
+
+	$id = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'id',
+		Zone     => 1,
+		Cluster  => 2,
+		Node     => 3,
+		Ref      => 5000);
+
+Or, more simply,
+
+	$id = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'id',
+		Id       => "<1.2.3>",
+		Ref      => 5000);
+
+Or, more simply,
+
+	$id = IO::Socket::TIPC::Sockaddr->new(
+		AddrType => 'id',
+		Id       => "<1.2.3:5000>");
+
+Or even just
+
+	$id = IO::Socket::TIPC::Sockaddr->new("<1.2.3:5000>");
+		
+With all address types, the stringify() method will return something
+readable.
+
+	$string = $id->stringify();
+	# stringify returns "<1.2.3:5000>"
 
 =cut
 
@@ -187,112 +287,13 @@ You can specify the B<Scope> as one of the TIPC_*_SCOPE constants, or
 as a string, "node", "cluster" or "zone".
 
 If you intend to use a "name"-type sockaddr, you might also want to
-provide the B<Domain> parameter, to specify how TIPC should search for
-the peer.  This param takes a TIPC address as its argument, which can
-be a string, like "<1.2.3>", or a number, like 0x01002003.  Please see
-the TIPC Programmers_Guide.txt for details.  The default is "<0.0.0>",
-which means, "gimme the closest node you can find, and search the
-whole network if you have to".
-
-Sockaddrs can be broken down into 3 address-types, "name", "nameseq"
-and "id". Again, the Programmers_Guide.txt explains this stuff much
-better than I ever could, you should read it.
-
-=head2 name
-
-You can use "name" sockets in the following manner:
-
-	$name = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'name',
-		Type => 4242,
-		Instance => 1005);
-
-Or
-
-	$name = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'name',
-		Name => '{4242, 1005}');
-
-Or, even
-
-	$name = IO::Socket::TIPC::Sockaddr->new('{4242, 1005}');
-
-With all address types, the stringify() method will return something
-readable.
-
-	$string = $name->stringify();
-	# stringify returns "{4242, 1005}"
-
-
-=head2 nameseq
-
-You can use "nameseq" sockets in the following manner:
-
-	$nameseq = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'nameseq',
-		Type     => 4242,
-		Lower    => 100,
-		Upper    => 1000);
-
-Or, more simply,
-
-	$nameseq = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'nameseq',
-		Name     => '{4242, 100, 1000}');
-
-Or even just
-
-	$nameseq = IO::Socket::TIPC::Sockaddr->new('{4242, 100, 1000}');
-
-If you don't specify an B<Upper>, it defaults to the B<Lower>.  If you
-don't specify a B<Lower>, it defaults to the B<Upper>.  You must
-specify at least one.
-
-	$nameseq = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'nameseq',
-		Type => 4242,
-		Lower => 100);
-
-With all address types, the stringify() method will return something
-readable.
-
-	$string = $nameseq->stringify();
-	# stringify returns "{4242, 100, 100}"
-
-
-=head2 id
-
-You can use "id" sockets in the following manner:
-
-	$id = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'id',
-		Zone     => 1,
-		Cluster  => 2,
-		Node     => 3,
-		Ref      => 5000);
-
-Or, more simply,
-
-	$id = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'id',
-		Id       => "<1.2.3>",
-		Ref      => 5000);
-
-Or, more simply,
-
-	$id = IO::Socket::TIPC::Sockaddr->new(
-		AddrType => 'id',
-		Id       => "<1.2.3:5000>");
-
-Or even just
-
-	$id = IO::Socket::TIPC::Sockaddr->new("<1.2.3:5000>");
-		
-With all address types, the stringify() method will return something
-readable.
-
-	$string = $id->stringify();
-	# stringify returns "<1.2.3:5000>"
+provide the B<Domain> parameter, to specify where TIPC should start,
+as it searches for a peer to connect to, and how far to search.  This
+param takes a TIPC address as its argument, which can be a string, like
+"<1.2.3>", or a number, like 0x01002003.  Please see the TIPC
+Programmers_Guide.txt for details.  The default is "<0.0.0>", which means,
+"gimme the closest node you can find, and search the whole network if you
+have to".
 
 =cut
 
@@ -360,34 +361,30 @@ sub new {
 
 	# check that we do have the arguments we need.
 	return undef unless check_prereqs_for_address_type(\%args);
-	$args{_sockaddr} = _create();
-	_fill_tipc_common(@args{'_sockaddr','Scope'});
+	my $sockaddr = _tipc_create();
+	_tipc_fill_common($sockaddr, $args{Scope});
 	switch($args{AddrType}) {
 		my $valid = 0;
 		case 'id' {
-			_fill_tipc_id_pieces(@args{"_sockaddr","Ref","Zone","Cluster","Node"});
+			_tipc_fill_id_pieces($sockaddr, @args{"Ref","Zone","Cluster","Node"});
 			$valid = 1;
 		}
 		case 'name' {
-			_fill_tipc_name(@args{"_sockaddr","Type","Instance","Domain"});
+			_tipc_fill_name($sockaddr, @args{"Type","Instance","Domain"});
 			$valid = 1;
 		}
 		case 'nameseq' {
-			_fill_tipc_nameseq(@args{"_sockaddr","Type","Upper","Lower"});
+			_tipc_fill_nameseq($sockaddr, @args{"Type","Lower","Upper"});
 			$valid = 1;
 		}
 	}
-	return bless({%args},$package);
+	return $sockaddr;
 }
 
 sub new_from_data {
 	my ($package, $data) = @_;
-	my $addr = $package->new(_stringify($data));
-	# FIXME: the sockaddr itself will retain Scope/Domain info, since we're
-	# keeping the same bits we started with.  However, the informational hash
-	# stuff will be missing these fields.
-	$$addr{_sockaddr} = $data;
-	return $addr;
+	get_family(\$data); # call this just so _sanity_check gets called
+	return bless(\$data, $package);
 }
 
 
@@ -412,30 +409,78 @@ binding/connecting may occur for names and nameseqs.  If you need to
 store an address for reuse, you are better off reusing the Sockaddr
 object itself, rather than storing one of these strings.
 
-=cut
+=head2 get/set routines
 
-sub stringify {
-	my $self = shift;
-	return _stringify($$self{_sockaddr});
-}
+The C structure has roughly the following format:
+	struct sockaddr_tipc {
+	        unsigned short family;
+	        unsigned char  addrtype;
+	        signed   char  scope;
+	        union {
+	                struct {
+	                	__u32 ref;
+	                	__u32 node;
+	                } id;
+	                struct {
+	                	__u32 type;
+	                	__u32 lower;
+	                	__u32 upper;
+	                } nameseq;
+	                struct {
+	                        struct {
+	                        	__u32 type;
+	                        	__u32 instance;
+	                        } name;
+	                        __u32 domain;
+	                } name;
+	        } addr;
+	};
 
-=head2 raw()
+Each of these fields has methods to get and set it.  The only exception is
+"family", which only has a "get" method (Otherwise this module would break).
+An exhaustive list of these methods follows:
 
-B<raw> returns a string containing the packed sockaddr_tipc structure.
-It is suitable for passing to bind(), connect(), sendto(), and so
-forth.
+=over
 
-	$sock->sendto($addr->raw(), "Hello!  My brain hurts.");
+=item global stuff
 
-B<bits> is an alias for B<raw>.
+	get_family()
+	get_addrtype()		set_addrtype(val)
+	get_scope()			set_scope(val)
 
-=cut
+=item TIPC_ADDR_ID stuff
 
-sub raw {
-	my $self = shift;
-	return $$self{_sockaddr};
-}
-sub bits { return raw(@_) }
+	get_ref()			set_ref(val)
+	get_id()			set_id(val)
+	get_zone()			set_zone(val)
+	get_cluster()		set_cluster(val)
+	get_node()			set_node(val)
+
+=item TIPC_ADDR_NAME stuff
+
+	get_ntype()			set_ntype(val)
+	get_instance()		set_instance(val)
+	get_domain()        set_domain(val)
+
+=item TIPC_ADDR_NAME stuff
+
+	get_stype()			set_stype(val)
+	get_lower()			set_lower(val)
+	get_upper()			set_upper(val)
+
+=item Type helpers
+
+	get_type()			set_type(arg)
+
+These functions call either get_ntype/set_ntype, or get_stype/set_stype,
+depending on the addrtype.
+
+=back
+
+Finally, some wrappers to choose nameseq.type versus name.name.type.  These are
+only here just in case they change the sockaddr_tipc structure so the two no
+longer share the same memory location via a union.  Pretty unlikely...
+
 
 =head1 HELPER ROUTINES
 

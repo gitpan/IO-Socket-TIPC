@@ -44,3 +44,11 @@ Revision history for Perl extension IO::Socket::TIPC.
 	  integers.  This is rather important; portid references are 32-bit and
 	  they seem to be randomly generated, so the high bit is set half of the
 	  time.
+
+0.10  Sat Apr 22 12:37:25 PDT 2006
+	- Add accessor methods for all of the individual Sockaddr fields.
+	- Sockaddr.pm class instances don't really need to be huge hash references,
+	  just a reference to the raw sockaddr_tipc data is fine.  This simplifies
+	  things quite a bit, and speeds it up a little too.
+	- Add an ugly, spammy, memory-leak test for the XS stuff.  It passes.
+	- Run tests in a non-random order.

@@ -11,11 +11,11 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '0.04';
+our $VERSION = '0.10';
 
 =head1 NAME
 
-IO::Socket::TIPC - Perl sockets for TIPC
+IO::Socket::TIPC - TIPC sockets for Perl
 
 =head1 SYNOPSIS
 
@@ -318,7 +318,7 @@ sub configure {
 		} else {
 			$baddr = IO::Socket::TIPC::Sockaddr->new(%local);
 		}
-		$socket->bind($baddr->raw)
+		$socket->bind($$baddr)
 			or croak "Could not bind socket: $!";
 	}
 	if($connector) {
@@ -328,7 +328,7 @@ sub configure {
 		} else {
 			$caddr = IO::Socket::TIPC::Sockaddr->new(%peer);
 		}
-		$socket->connect($caddr->raw)
+		$socket->connect($$caddr)
 			or croak "Could not connect socket: $!";
 	}
 	if($listener) {
@@ -411,7 +411,7 @@ sub sendto {
 	croak "sendto given a non-address?"
 		unless ref($addr) eq "IO::Socket::TIPC::Sockaddr";
 	$flags = 0 unless defined $flags;
-	return $self->send($message, $flags, $addr->raw());
+	return $self->send($message, $flags, $$addr);
 }
 
 
@@ -494,6 +494,21 @@ http://tipc.cslab.ericcson.net/, Programmers_Guide.txt.
 =head1 AUTHOR
 
 Mark Glines <mark-tipc@glines.org>
+
+
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to Ericcson and Wind River, of course, for open-sourcing their (very
+useful!) network code, and performing the enormous maintenance task of getting
+it into the stock Linux kernel.  Respect.
+
+More specifically, thanks to the TIPC maintainers, for doing all the work
+bringing TIPC to linux, and making all of this possible.  And thanks
+especially to Allan Stephens for patiently testing all of my pathetic, 
+bug-ridden alpha releases. :)
+
+Hrm, who else... thanks Larry Wall, thanks Linus Torvalds, etc etc, these
+ACKNOWLEDGEMENTS sections do tend to drone on and on, don't they.
 
 
 =head1 COPYRIGHT AND LICENSE

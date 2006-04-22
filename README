@@ -18,15 +18,28 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-The Scalar::Util, Switch, and Test::Exception perl modules are required.
-This runs under a linux kernel which has TIPC enabled.  If you built TIPC as
-a module, be sure you've loaded it with the "modprobe" command.
+An operating system supported by TIPC, which also has Perl.  (So far, that
+means Linux.)
 
-I'm unaware of TIPC being supported for any platform other than Linux at
-present, patches are welcome.
+At build-time, it must be able to find the header file "tipc.h".  It will try
+/usr/include/linux and a couple of well-known Linux kernel locations before
+giving up.
 
-For building, it must be able to find the header file <linux/tipc.h>.  It will
-try /usr/include and a couple of well-known kernel locations before giving up.
+At runtime, it expects your kernel to have TIPC enabled.  (You'll see a line
+in your /proc/net/protocols that starts with "TIPC".)  Without this, some of
+the most important tests will be skipped, and none of the examples will work.
+If you've built TIPC as a module, be sure you've loaded it with the "modprobe"
+command.
+
+The Scalar::Util and Switch perl modules are required.
+
+In addition to the above, the test suite uses Test::Exception, Test::Pod and
+Devel::Leak.  Without each of these, it will skip a portion of the tests.
+Note: the Devel::Leak tests result in a lot of ugly hexspam, so it probably
+isn't worth the trouble.  The other two modules are very helpful, though.
+
+I'm looking forward to supporting other operating systems, as soon as TIPC
+itself does.  Patches are always welcome.
 
 
 AUTHOR
