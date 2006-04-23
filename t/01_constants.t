@@ -26,11 +26,13 @@ foreach my $constname (qw(
 	TIPC_NODE_SCOPE TIPC_OK TIPC_PUBLISHED TIPC_RESERVED_TYPES TIPC_RETDATA
 	TIPC_SRC_DROPPABLE TIPC_SUBSCR_TIMEOUT TIPC_SUB_PORTS TIPC_SUB_SERVICE
 	TIPC_TOP_SRV TIPC_WAIT_FOREVER TIPC_WITHDRAWN TIPC_ZONE_SCOPE
-	SOCK_STREAM SOCK_DGRAM SOCK_SEQPACKET SOCK_RDM TIPC_SUB_NO_BIND_EVTS
-	TIPC_SUB_NO_UNBIND_EVTS TIPC_SUB_SINGLE_EVT)) {
+	TIPC_SUB_NO_BIND_EVTS TIPC_SUB_NO_UNBIND_EVTS TIPC_SUB_SINGLE_EVT
+	SOCK_STREAM SOCK_DGRAM SOCK_SEQPACKET SOCK_RDM
+	MSG_DONTWAIT MSG_PEEK MSG_WAITALL MSG_CTRUNC
+	)) {
   ok(eval("my \$a = $constname(); 1"), "constant $constname is callable");
 }
-BEGIN { $tests += 44 };
+BEGIN { $tests += 48 };
 
 # These function need to return useful values.  We call them internally, and
 # therefore they are necessary for normal operation of the perl module.

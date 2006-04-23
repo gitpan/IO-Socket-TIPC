@@ -52,3 +52,11 @@ Revision history for Perl extension IO::Socket::TIPC.
 	  things quite a bit, and speeds it up a little too.
 	- Add an ugly, spammy, memory-leak test for the XS stuff.  It passes.
 	- Run tests in a non-random order.
+
+0.11 Sun Apr 23 10:00:35 PDT 2006
+	- change my XS POD into #-style comments... I don't really want my ugly
+	  internals listed as "Documentation" on cpan.org.
+	- Sockaddr.pm: fix the ->set_* functions.  
+	- implement ->getpeername() and ->getsockname().
+	- export tipc_addr, tipc_zone, tipc_cluster, tipc_node functions.
+	- the documentation should now be complete.

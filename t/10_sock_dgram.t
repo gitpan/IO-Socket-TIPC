@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use IO::Socket::TIPC;
+use IO::Socket::TIPC ':all';
 use Test::More;
 my $tests;
 BEGIN { $tests = 0; };
@@ -8,75 +8,86 @@ BEGIN { $tests = 0; };
 my $Type = 0x73570000 + $$;
 
 # Long API.
-my $csock = IO::Socket::TIPC->new(
-	SocketType => 'dgram',
+my ($instance1, $instance2) = (0x73570401, 0x73570402);
+my $sock1 = IO::Socket::TIPC->new(
+	SocketType => SOCK_DGRAM,
 	LocalAddrType => 'name',
 	LocalType => $Type,
-	LocalInstance => 73570402,
+	LocalInstance => $instance2,
 	LocalScope => 'node',
 );
-ok(defined($csock), "Create the first socket");
+ok(defined($sock1), "Create the first socket");
 if(fork()) {
-	# server (and test) process.
+	# PEER2 (and test) process.
 	# SOCKET CREATION.
-	my $ssock = IO::Socket::TIPC->new(
+	my $sock2 = IO::Socket::TIPC->new(
 		SocketType => 'dgram',
 		LocalAddrType => 'name',
 		LocalType => $Type,
-		LocalInstance => 73570401,
+		LocalInstance => $instance1,
 		LocalScope => 'node',
 	);
-	ok(defined($ssock), "Create a second socket");
+	ok(defined($sock2), "Create a second socket");
+
+	# connectionless socket; getpeername() shouldn't work
+	my $paddr = $sock2->getpeername();
+	ok(!defined($paddr), "getpeername() doesn't work on SOCK_RDM");
+	my $saddr = $sock2->getsockname();
+	ok(defined($saddr), "getsockname() still works on SOCK_RDM");
+	ok(length($saddr->stringify), "stringify doesn't barf on sockaddr");
+	unlike($saddr->stringify, qr/[()]/, "sockaddr is well-formed");
+
 	alarm(5);
-	my $caddr = IO::Socket::TIPC::Sockaddr->new(
+	my $addr1 = IO::Socket::TIPC::Sockaddr->new(
 		AddrType => 'name',
 		Type => $Type,
-		Instance => 73570402,
+		Instance => $instance2,
 	);
-	$ssock->sendto($caddr, "Hello there!\n");
+	$sock2->sendto($addr1, "Hello there!\n");
 	my $string;
-	my $client = $ssock->recvfrom($string, 13);
+	my $replyaddr = $sock2->recvfrom($string, 13);
 	like($string, qr/Well, hello/, "Client replied to our message");
 } else {
-	# child process
+	# PEER1 process
 	alarm(5);
 	my $string;
-	my $serv = $csock->recvfrom($string, 13);
+	my $serv = $sock1->recvfrom($string, 13);
 	if($string =~ /Hello/) {
-		$csock->sendto($serv, "Well, hello!\n");
+		$sock1->sendto($serv, "Well, hello!\n");
 	}
 	exit(0);
 }
-BEGIN { $tests += 3; }
+BEGIN { $tests += 7; }
 
 
 # Shorthand version of the same thing.
-$csock = IO::Socket::TIPC->new(
-	SocketType => 'dgram',
-	Local => "{$Type, 73570404}",
+($instance1, $instance2) = (0x73570403, 0x73570404);
+$sock1 = IO::Socket::TIPC->new(
+	SocketType => SOCK_DGRAM,
+	Local => "{$Type, $instance1}",
 );
-ok(defined($csock), "Create the first socket");
+ok(defined($sock1), "Create the first socket");
 if(fork()) {
-	# server (and test) process.
+	# PEER2 (and test) process.
 	# SOCKET CREATION.
-	my $ssock = IO::Socket::TIPC->new(
+	my $sock2 = IO::Socket::TIPC->new(
 		SocketType => 'dgram',
-		Local => "{$Type, 73570403}",
+		Local => "{$Type, $instance2}",
 	);
-	ok(defined($ssock), "Create a second socket");
+	ok(defined($sock2), "Create a second socket");
 	alarm(5);
-	my $caddr = IO::Socket::TIPC::Sockaddr->new("{$Type, 73570404}");
-	$ssock->sendto($caddr, "Hello there!\n");
+	my $addr1 = IO::Socket::TIPC::Sockaddr->new("{$Type, $instance1}");
+	$sock2->sendto($addr1, "Hello there!\n");
 	my $string;
-	my $client = $ssock->recvfrom($string, 13);
+	my $replyaddr = $sock2->recvfrom($string, 13);
 	like($string, qr/You again/, "Client replied to our message");
 } else {
-	# child process
+	# PEER1 process
 	alarm(5);
 	my $string;
-	my $serv = $csock->recvfrom($string, 13);
+	my $serv = $sock1->recvfrom($string, 13);
 	if($string =~ /Hello/) {
-		$csock->sendto($serv, "You again??!\n");
+		$sock1->sendto($serv, "You again??!\n");
 	}
 	exit(0);
 }

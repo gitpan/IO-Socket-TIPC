@@ -1,8 +1,7 @@
 package IO::Socket::TIPC;
-use IO::Socket::TIPC::Sockaddr;
+use IO::Socket::TIPC::Sockaddr ':all';
 use strict;
 use Carp;
-use Socket;
 use IO::Socket;
 use Switch;
 use Scalar::Util qw(looks_like_number);
@@ -11,7 +10,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 NAME
 
@@ -21,9 +20,12 @@ IO::Socket::TIPC - TIPC sockets for Perl
 
 	use IO::Socket::TIPC;
 	my $sock = IO::Socket::TIPC->new(
-		Type => 'stream',
-		Peer => '{1000,100}'
+		Type => "stream",
+		Peer => "{1000, 100}"
 	);
+	die "Could not connect to {1000, 100}: $!\n" unless $sock;
+
+More in-depth examples are available in the B<EXAMPLES> section, below.
 
 
 =head1 DESCRIPTION
@@ -34,82 +36,51 @@ http://tipc.sf.net/ for details.
 This perl module subclasses IO::Socket, in order to use TIPC sockets
 in the customary (and convenient) Perl fashion.
 
-=head1 EXPORT
+TIPC supports 4 types of socket: I<SOCK_STREAM>, I<SOCK_SEQPACKET>,
+I<SOCK_RDM> and I<SOCK_DGRAM>.  These are all available through this
+perl API, though the usage varies depending on which kind of socket
+you use.
 
-None by default.
+I<SOCK_STREAM> and I<SOCK_SEQPACKET> are connection-based sockets.
+These sockets are strictly client/server.  For servers, B<new>() will
+call B<bind>() for you, to bind to a I<Local>* name, and you then
+B<accept>() connections from clients, each of which get their own
+socket (returned from B<accept>).  For clients, B<new>() will call
+B<connect>() for you, to connect to the specified I<Peer>* name, and
+once that succeeds, you can do I/O on the socket directly.  In this
+respect, usage details are very similar to I<TCP> over I<IPv4>.
 
-=head2 Exportable constants
+See the B<EXAMPLES> section, for an example of connection-based socket
+use.
 
-  ":tipc" tag (defines from tipc.h):
-  AF_TIPC
-  PF_TIPC
-  SOL_TIPC
-  TIPC_ADDR_ID
-  TIPC_ADDR_MCAST
-  TIPC_ADDR_NAME
-  TIPC_ADDR_NAMESEQ
-  TIPC_CFG_SRV
-  TIPC_CLUSTER_SCOPE
-  TIPC_CONN_SHUTDOWN
-  TIPC_CONN_TIMEOUT
-  TIPC_CRITICAL_IMPORTANCE
-  TIPC_DESTNAME
-  TIPC_DEST_DROPPABLE
-  TIPC_ERRINFO
-  TIPC_ERR_NO_NAME
-  TIPC_ERR_NO_NODE
-  TIPC_ERR_NO_PORT
-  TIPC_ERR_OVERLOAD
-  TIPC_HIGH_IMPORTANCE
-  TIPC_IMPORTANCE
-  TIPC_LOW_IMPORTANCE
-  TIPC_MAX_USER_MSG_SIZE
-  TIPC_MEDIUM_IMPORTANCE
-  TIPC_NODE_SCOPE
-  TIPC_OK
-  TIPC_PUBLISHED
-  TIPC_RESERVED_TYPES
-  TIPC_RETDATA
-  TIPC_SRC_DROPPABLE
-  TIPC_SUBSCR_TIMEOUT
-  TIPC_SUB_NO_BIND_EVTS
-  TIPC_SUB_NO_UNBIND_EVTS
-  TIPC_SUB_PORTS
-  TIPC_SUB_SERVICE
-  TIPC_SUB_SINGLE_EVT
-  TIPC_TOP_SRV
-  TIPC_WAIT_FOREVER
-  TIPC_WITHDRAWN
-  TIPC_ZONE_SCOPE
+I<SOCK_RDM> and I<SOCK_DGRAM> are connectionless sockets.  You cannot
+use the normal send/recv/print/getline methods on them, because the
+network stack will not know which host on the network to send or
+receive from.  Instead, once you have called B<new>() to create the
+socket, you use B<sendto> and B<recvfrom> to send and receive
+individual packets to/from a specified peer, indicated using an
+IO::Socket::TIPC::Sockaddr class object.
 
-  ":socktypes" tag (exports from Socket.pm):
-  SOCK_STREAM
-  SOCK_DGRAM
-  SOCK_SEQPACKET
-  SOCK_RDM
+Connectionless sockets (I<SOCK_RDM> and I<SOCK_DGRAM>) are often
+bind()ed to a particular I<Name> or I<Nameseq> address, in order to
+allow them to listen for packets sent to a well-known destination
+(the I<Name>).  You can use I<LocalName> or I<LocalNameseq> parameters
+to B<new>(), to select a name or name-sequence to bind to.  As above,
+these parameters internally become I<Name> and I<Nameseq> arguments to
+IO::Socket::TIPC::Sockaddr->B<new>(), and the result is passed to
+B<bind>().  This is very similar to typical uses of I<UDP> over
+I<IPv4>.
 
-To get all of the above constants, say:
+Since connectionless sockets are not linked to a particular peer, you
+can use B<sendto> to send a packet to some peer with a given Name in
+the network, and B<recvfrom> to receive replies from a peer in the
+network who sends a packet to your I<Name> (or I<Nameseq>).  You can
+also use I<Nameseq> addressses to send multicast packets to *every*
+peer with a given name.  Please see the I<Programmers_Guide.txt>
+document for more details.
 
-	use IO::Socket::TIPC ':all';
-
-To get all of the tipc stuff, say:
-
-	use IO::Socket::TIPC ':tipc';
-
-To get only the socket stuff, say:
-
-	use IO::Socket::TIPC ':socktypes';
-
-To get only the constants you plan to use, say something like:
-
-	use IO::Socket::TIPC qw(SOCK_RDM TIPC_NODE_SCOPE);
-
-Despite supporting all the above constants, please note that some
-effort was made so normal users won't actually need any of them.  For
-instance, in place of the SOCK_* socktypes, you can just specify
-"stream", "dgram", "seqpacket" or "rdm".  In place of the TIPC_*_SCOPE
-defines, given to Sockaddr's B<Scope> parameter, you can simply say
-"zone", "cluster" or "node".
+See the B<EXAMPLES> section, for an example of connection-less socket
+use.
 
 =cut
 
@@ -136,110 +107,77 @@ sub AUTOLOAD {
 B<new> returns a TIPC socket object.  This object inherits from
 IO::Socket, and thus inherits all the methods of that class.  
 
-This module was modeled specifically after B<IO::Socket::INET>, and
+This module was modeled specifically after I<IO::Socket::INET>, and
 shares some things in common with that class.  Specifically, the
-B<Listen> parameter, the Peer* and Local* nomenclature, and the
-behind-the-scenes calls to socket(), bind(), listen(), connect(), and
-what have you.
+I<Listen> parameter, the I<Peer>* and I<Loca>l* nomenclature, and the
+behind-the-scenes calls to B<socket>(), B<bind>(), B<listen>(),
+B<connect>(), and so on.
 
-Connection-based sockets (B<SOCK_STREAM> and B<SOCK_SEQPACKET>) come
-in "listen" and "connect" varieties.  To create a listener socket,
-specify B<Listen =E<gt> 1> in your parameter list.  You can bind a
-name to the socket, by providing a parameter like B<LocalName> =>
-'{4242, 100}'.  To create a connection socket, provide one or more
-Peer* parameters.
+Connection-based sockets (I<SOCK_STREAM> and I<SOCK_SEQPACKET>) come
+in "server" and "client" varieties.  To create a server socket,
+specify the I<Listen> argument to B<new>().  You can bind a
+name to the socket, thus making your server easier to find, by
+providing one or more I<Local>* parameters.  To create a client
+socket, do B<NOT> provide the I<Listen> argument.  Instead, provide
+one or more I<Peer>* parameters, and B<new> will call B<connect>()
+for you.
 
-All Local* parameters are passed directly to
-IO::Socket::TIPC::Sockaddr->new(), minus the 'Local' prefix, and the
-resulting sockaddr is passed to bind().  Similarly, all Peer*
-parameters are passed directly to IO::Socket::TIPC::Sockaddr->new(),
-minus the 'Peer' prefix, and the result is passed to connect().  The
-keywords B<Local> and B<Peer> themselves become the first string
-parameter to new(); see the IO::Socket::TIPC::Sockaddr documentation
-for details.
+All I<Local>* parameters are passed directly to
+IO::Socket::TIPC::Sockaddr->B<new>(), minus the "Local" prefix, and the
+resulting sockaddr is passed to B<bind>().  Similarly, all I<Peer>*
+parameters are passed directly to IO::Socket::TIPC::Sockaddr->B<new>(),
+minus the "Peer" prefix, and the result is passed to B<connect>().  The
+keywords I<Local> and I<Peer> themselves become the first string
+parameter to IO::Socket::TIPC::Sockaddr->B<new>(); see the
+IO::Socket::TIPC::Sockaddr documentation for details.
 
-Examples of connection-based socket use:
+=head2 ARGUMENTS to new()
 
-	# Create a server listening on Name {4242, 100}.
-	$sock1 = IO::Socket::TIPC->new(
-		SocketType => 'stream',
-		Listen => 1,
-		LocalAddrType => 'name',
-		LocalType => 4242,
-		LocalInstance => 100,
-		LocalScope => 'zone',
-	);
+=head2 SocketType
 
-	# Connect to the above server
-	$sock2 = IO::Socket::TIPC->new(
-		SocketType => 'stream',
-		PeerAddrType => 'name',
-		PeerType => 4242,
-		PeerInstance => 100,
-		PeerDomain => '<0.0.0>',
-	);
+This flag is B<required>.  It tells the system what type of socket
+to use.  The following constants will work, if they were imported:
+I<SOCK_STREAM>, I<SOCK_SEQPACKET>, I<SOCK_RDM>, or I<SOCK_DGRAM>.
+Otherwise, you can just use the following text strings: "stream",
+"seqpacket", "rdm", or "dgram".
 
-Or the short versions of the same thing:
+=head2 Listen
 
-	# Create a server listening on Name {4242, 100}.
-	$sock1 = IO::Socket::TIPC->new(
-		SocketType => 'seqpacket',
-		Listen => 1,
-		Local => '{4242, 100}',
-		LocalScope => 'zone',
-	);
+This method is only valid for connection-based B<SocketType>s.  Its
+existence specifies that this is a server socket.  It is common to
+also specify some I<Local>* arguments, so B<new>() can B<bind> your
+shiny new server socket to a well-known name.
 
-	# Connect to the above server
-	$sock2 = IO::Socket::TIPC->new(
-		SocketType => 'seqpacket',
-		Peer => '{4242, 100}',
-	);
+=head2 Local*
 
+This parameter is valid (and recommended) for all connectionless
+socket types, and for all servers using connection-type sockets.
+The I<Local>* parameter(s) determine which address your socket will
+get B<bind>()ed to.
 
+Any arguments prefixed with "Local" will be passed to
+IO::Socket::TIPC::Sockaddr->B<new>(), with the "Local" prefix
+removed.  If you specify the word I<Local>, itself, the argument
+will be passed as the first string parameter to
+IO::Socket::TIPC::Sockaddr->B<new>(); all other I<Local>* arguments
+end up in the hash parameter list.  See the documentation for
+IO::Socket::TIPC::Sockaddr, for details.  Also, skip to the
+B<EXAMPLES> section to see what this stuff looks like.
 
-Connectionless sockets (B<SOCK_RDM> and B<SOCK_DGRAM>) have no concept
-of connecting or listening, but may still be bind()ed to a B<Name> or
-B<Nameseq>.  You can use B<LocalName> or B<LocalNameseq> parameters to
-select a name or name-sequence to bind to.  As above, these parameters
-internally become B<Name> and B<Nameseq> arguments to
-IO::Socket::TIPC::Sockaddr->new(), and the result is passed to bind().
+=head2 Peer*
 
-Since connectionless sockets are not linked to a particular peer, you
-can use B<sendto> to send a packet to some peer with a given Name in
-the network, and B<recvfrom> to receive replies from a peer in the
-network who sends a packet to your B<Name>.  You can also use
-B<Nameseq> to send multicast packets to *every* peer with a given
-name.  Please see the TIPC project's B<Programmers_Guide.txt> document
-for more details.
+This parameter is only valid for all clients using connection-type
+sockets, and is required for this case.  The I<Peer>* parameter(s)
+determine which address your socket will get B<connect>()ed to.
 
-Examples of connectionless socket use:
-
-	# Create a server listening on Name {4242, 100}.
-	$sock1 = IO::Socket::TIPC->new(
-		SocketType => 'rdm',
-		Local => '{4242, 100}',
-		LocalScope => 'zone',
-	);
-
-	# Create another server listening on Name {4242, 101}.
-	$sock2 = IO::Socket::TIPC->new(
-		SocketType => 'rdm',
-		Local => '{4242, 101}',
-		LocalScope => 'zone',
-	);
-
-	$data = "TAG!  You're 'it'.";
-
-	# send a hello packet from sock2 to sock1
-	$addr1 = IO::Socket::TIPC::Sockaddr->new("{4242, 100}");
-	$sock2->sendto($addr1, $data);
-
-	# receive that first hello packet
-	$sender_addr = $sock1->recvfrom($rxdata, 256);
-
-	# send a (multicast) packet from sock1 to sock2's, everywhere
-	$maddr2 = IO::Socket::TIPC::Sockaddr->new("{4242, 101, 101}");
-	$sock1->sendto($maddr2, "My brain hurts!");
+Any arguments prefixed with "Peer" will be passed to
+IO::Socket::TIPC::Sockaddr->B<new>(), with the "Peer" prefix
+removed.  If you specify the word I<Peer>, itself, the argument
+will be passed as the first string parameter to
+IO::Socket::TIPC::Sockaddr->B<new>(); all other I<Peer>* arguments
+end up in the hash parameter list.  See the documentation for
+IO::Socket::TIPC::Sockaddr, for details.  Also, skip to the
+B<EXAMPLES> section to see what this stuff looks like.
 
 =cut
 
@@ -318,7 +256,7 @@ sub configure {
 		} else {
 			$baddr = IO::Socket::TIPC::Sockaddr->new(%local);
 		}
-		$socket->bind($$baddr)
+		$socket->bind($baddr)
 			or croak "Could not bind socket: $!";
 	}
 	if($connector) {
@@ -328,7 +266,7 @@ sub configure {
 		} else {
 			$caddr = IO::Socket::TIPC::Sockaddr->new(%peer);
 		}
-		$socket->connect($$caddr)
+		$socket->connect($caddr)
 			or croak "Could not connect socket: $!";
 	}
 	if($listener) {
@@ -387,21 +325,22 @@ sub fixup_args {
 
 =head2 sendto(addr, message [, flags])
 
-B<sendto> is used with connectionless sockets, to send a message to a given
-address.  The addr parameter should be an IO::Socket::TIPC::Sockaddr object.
+B<sendto> is used with connectionless sockets, to send a message to a
+given address.  The addr parameter should be an
+IO::Socket::TIPC::Sockaddr object.
 
 	my $addr = IO::Socket::TIPC::Sockaddr->new("{4242, 100}");
 	$sock->sendto($addr, "Hello there!\n");
 
-You may have noticed that B<sendto> and Perl's builtin B<send> do more or
-less the same thing with the order of arguments changed.  The main reason to
-use B<sendto> is because you can pass it a IO::Socket::TIPC::Sockaddr object
-directly, where B<send> requires you to call its ->B<raw>() method to get at
-the raw binary "struct sockaddr_tipc" data.  So, B<sendto> is just a matter of
-convenience.
+You may have noticed that B<sendto> and the B<send> builtin do more
+or less the same thing with the order of arguments changed.  The main
+reason to use B<sendto> is because you can pass it a
+IO::Socket::TIPC::Sockaddr object directly, where B<send> requires you
+to dereference the blessed reference to get at the raw binary "struct
+sockaddr_tipc" bits.  So, B<sendto> is just a matter of convenience.
 
-Ironically, this B<sendto> method calls perl's B<send> builtin, which in turn
-calls the C B<sendto> function.
+Ironically, this B<sendto> method calls the B<send> builtin, which in
+turn calls the C B<sendto> function.
 
 =cut
 
@@ -417,23 +356,25 @@ sub sendto {
 
 =head2 recvfrom(buffer, length [, flags])
 
-B<recvfrom> is used with connectionless sockets, to receive a message from
-a peer.  It returns a IO::Socket::TIPC::Sockaddr object, containing the
-address of the message's sender.  B<NOTE!>  You must pass a *REFERENCE* to
-the buffer, since it will be written to.
+B<recvfrom> is used with connectionless sockets, to receive a message
+from a peer.  It returns a IO::Socket::TIPC::Sockaddr object,
+containing the address of whoever sent the message.  It will write
+the received packet (up to $length bytes) in $buffer.
 
 	my $buffer;
-	my $sender = $sock->recvfrom(\$buffer, 30);
+	my $sender = $sock->recvfrom($buffer, 30);
 	$sock->sendto($sender, "I got your message.");
 
-You may have noticed that B<recvfrom> and Perl's builtin B<recv> do more or
-less the same thing with the order of arguments changed.  The main reason to
-use B<recvfrom> is because it will return a IO::Socket::TIPC::Sockaddr object,
-where B<recv> just returns a binary blob containing the C "struct
-sockaddr_tipc" data.
+You may have noticed that B<recvfrom> and the B<recv> builtin do
+more or less the same thing with the order of arguments changed.
+The main reason to use B<recvfrom> is because it will return a
+IO::Socket::TIPC::Sockaddr object, where B<recv> just returns a
+binary blob containing the C "struct sockaddr_tipc" data, which, by
+itself, cannot be inspected or modified.  So, B<recvfrom> is just a
+matter of convenience.
 
-Ironically, this B<recvfrom> method calls perl's B<recv> builtin, which in
-turn calls the C B<recvfrom> function.
+Ironically, this B<recvfrom> method calls the B<recv> builtin, which
+in turn calls the C B<recvfrom> function.
 
 =cut
 
@@ -444,6 +385,256 @@ sub recvfrom {
 	my $rv = $self->recv($_[1], $length, $flags);
 	return IO::Socket::TIPC::Sockaddr->new_from_data($rv);
 }
+
+
+=head2 bind(addr)
+
+B<bind> attaches a well-known "name" to an otherwise random (and hard
+to find) socket port.  It is possible to bind more than one name to a
+socket.  B<bind> is useful for all connectionless sockets, and for 
+"server" sockets (the one you get from B<new>(I<Listen> => 1), not the
+ones returned from B<accept>).
+
+This method is really just a wrapper around the Perl B<bind> builtin,
+which dereferences IO::Socket::TIPC::Sockaddr class instances when
+necessary.
+
+=cut
+
+sub bind {
+	my ($sock, $addr) = @_;
+	$addr = $$addr while ref $addr;
+	return $sock->SUPER::bind($addr);
+}
+
+
+=head2 connect(addr)
+
+B<connect> seeks out a server socket (which was B<bind>ed to a 
+well-known "name") and connects to it.  B<connect> is only valid for
+connection-type sockets which have not already had B<listen> or
+B<bind> called on them.  In practice, you should not ever need this
+method; B<new> calls it for you when you specify one or more
+I<Peer> arguments.
+
+This method is really just a wrapper around the Perl B<connect>
+builtin, which dereferences IO::Socket::TIPC::Sockaddr class
+instances when necessary.
+
+=cut
+
+sub connect {
+	my ($sock, $addr) = @_;
+	$addr = $$addr while ref $addr;
+	return $sock->SUPER::connect($addr);
+}
+
+
+=head2 getpeername
+
+B<getpeername> returns the sockaddr of the peer you're connected
+to.  Compare B<getsockname>.  Use this if you've just B<accept>()ed
+a new connection, and you're curious who you're talking to.
+
+	my $client = $server->accept();
+	my $caddr = $client->getpeername();
+	print("Got connection from ", $caddr->stringify(), "\n");
+
+B<getpeername> doesn't actually return a I<name> sockaddr, it returns
+an I<id>.  Thus, B<getpeerid> is an alias for B<getpeername>, to aid
+readability.  Programmers_Guide.txt has the following comment: The
+use of "name" in getpeername() can be confusing, as the routine does
+not actually return the TIPC names or name sequences that have been
+bound to the peer socket.
+
+This method is really just a wrapper around the Perl B<getpeername>
+builtin, to wrap return values into IO::Socket::TIPC::Sockaddr class
+instances for you.
+
+
+=cut
+
+sub getpeername {
+	my ($self) = @_;
+	my $rv = CORE::getpeername($self);
+	return $rv unless defined $rv;
+	return IO::Socket::TIPC::Sockaddr->new_from_data($rv);
+}
+sub getpeerid { my $self = shift; return $self->getpeername(@_) };
+
+=head2 getsockname
+
+B<getsockname> returns the sockaddr of your own socket, this is the
+address your peer sees you coming from.  Compare B<getpeername>.
+
+	my $client = $server->accept();
+	my $caddr = $client->getsockname();
+	print("The client connected to me as ", $caddr->stringify(), "\n");
+
+B<getsockname> doesn't actually return a I<name> sockaddr, it returns
+an I<id>.  Thus, B<getsockid> is an alias for B<getsockname>, to aid
+readability.  Programmers_Guide.txt has the following comment: The
+use of "name" in getsockname() can be confusing, as the routine does
+not actually return the TIPC names or name sequences that have been
+bound to the peer socket.
+
+This method is really just a wrapper around the Perl B<getsockname>
+builtin, to wrap return values into IO::Socket::TIPC::Sockaddr class
+instances for you.
+
+
+=cut
+
+sub getsockname {
+	my ($self) = @_;
+	my $rv = CORE::getsockname($self);
+	return $rv unless defined $rv;
+	return IO::Socket::TIPC::Sockaddr->new_from_data($rv);
+}
+sub getsockid { my $self = shift; return $self->getsockname(@_) };
+
+
+=head2 listen
+
+B<listen> tells the operating system that this is a server socket,
+and that you will be B<accept>()ing client connections on it.  It is
+only valid for connection-type sockets, and only if B<connect> has
+not been called on it.  It is much more useful if you have B<bind>ed
+the socket to a well-known name; otherwise, most clients will have
+difficulty knowing what to B<connect> to.
+
+This module does not actually implement a B<listen> method; when you
+call it, you are really just calling the Perl builtin.  See the
+perlfunc manpage for more details.
+
+=head2 accept
+
+B<accept> asks the operating system to return a session socket, for
+communicating with a client which has just B<connect>ed to you.  It is
+only valid for connection-type sockets, which you have previously
+called B<listen> on.
+
+This module does not actually implement an B<accept> method; when you
+call it, you are really just calling the Perl builtin.  See the
+perlfunc manpage for more details.
+
+=cut
+
+=head1 EXAMPLES
+
+Examples of connection-based socket use:
+
+	# SERVER PROCESS
+	# create a server listening on Name {4242, 100}.
+	$sock1 = IO::Socket::TIPC->new(
+		SocketType => "seqpacket",
+		Listen => 1,
+		Local => "{4242, 100}",
+		LocalScope => "zone",
+	);
+	$client = $sock1->accept();
+	# Wait for the client to say something intelligent
+	$something_intelligent = $client->getline();
+
+
+	# CLIENT PROCESS
+	# connect to the above server
+	$sock2 = IO::Socket::TIPC->new(
+		SocketType => "seqpacket",
+		Peer => "{4242, 100}",
+	);
+	# Say something intelligent
+	$sock2->print("Dah, he is Olle, you are Sven.\n");
+	
+Examples of connectionless socket use:
+
+	# NODE 1
+	# Create a server listening on Name {4242, 101}.
+	$sock1 = IO::Socket::TIPC->new(
+		SocketType => "rdm",
+		Local => "{4242, 101}",
+		LocalScope => "zone",
+	);
+	$data = "TAG!  You are \"it\".\n";
+	# send a hello packet from sock1 to sock2
+	$addr2 = IO::Socket::TIPC::Sockaddr->new("{4242, 102}");
+	$sock1->sendto($addr2, $data);
+
+
+	# NODE 2
+	# Create another server listening on Name {4242, 102}.
+	$sock2 = IO::Socket::TIPC->new(
+		SocketType => "rdm",
+		Local => "{4242, 102}",
+		LocalScope => "zone",
+	);
+	# receive that first hello packet
+	$sender = $sock2->recvfrom($rxdata, 256);
+	# Reply
+	$sock2->sendto($sender, "Me too.\n");
+	
+	# send a multicast packet to all sock1s in the world
+	$maddr1 = IO::Socket::TIPC::Sockaddr->new("{4242,101,101}");
+	$sock2->sendto($maddr2, "My brain hurts!\n");
+
+
+=head1 EXPORT
+
+None by default.
+
+=head2 Exportable constants and macros
+
+  ":tipc" tag (defines from tipc.h, loosely grouped by function):
+  AF_TIPC, PF_TIPC, SOL_TIPC
+  TIPC_ADDR_ID, TIPC_ADDR_MCAST, TIPC_ADDR_NAME, TIPC_ADDR_NAMESEQ
+  TIPC_ZONE_SCOPE, TIPC_CLUSTER_SCOPE, TIPC_NODE_SCOPE
+  TIPC_ERRINFO, TIPC_RETDATA, TIPC_DESTNAME
+  TIPC_IMPORTANCE, TIPC_SRC_DROPPABLE, TIPC_DEST_DROPPABLE,
+  TIPC_CONN_TIMEOUT
+  TIPC_LOW_IMPORTANCE, TIPC_MEDIUM_IMPORTANCE, TIPC_HIGH_IMPORTANCE,
+  TIPC_CRITICAL_IMPORTANCE
+  TIPC_MAX_USER_MSG_SIZE
+  TIPC_OK, TIPC_ERR_NO_NAME, TIPC_ERR_NO_NODE, TIPC_ERR_NO_PORT,
+  TIPC_ERR_OVERLOAD, TIPC_CONN_SHUTDOWN  
+  TIPC_PUBLISHED, TIPC_WITHDRAWN, TIPC_SUBSCR_TIMEOUT
+  TIPC_SUB_NO_BIND_EVTS, TIPC_SUB_NO_UNBIND_EVTS,
+  TIPC_SUB_PORTS, TIPC_SUB_SERVICE, TIPC_SUB_SINGLE_EVT
+  TIPC_CFG_SRV, TIPC_TOP_SRV, TIPC_RESERVED_TYPES
+  TIPC_WAIT_FOREVER
+  tipc_addr, tipc_zone, tipc_cluster, tipc_node
+
+(Those last 4 are re-exports from the Sockaddr module.  See the
+IO::Socket::TIPC::Sockaddr documentation.)
+
+  ":sock" tag (re-exports from IO::Socket):
+  SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RDM
+  MSG_DONTWAIT, MSG_PEEK, MSG_WAITALL, MSG_CTRUNC
+
+To get all of the above constants, say:
+
+  use IO::Socket::TIPC ":all";
+
+To get all of the tipc stuff, say:
+
+  use IO::Socket::TIPC ":tipc";
+
+To get only the socket stuff, say:
+
+  use IO::Socket::TIPC ":sock";
+
+To get only the constants you plan to use, say something like:
+
+  use IO::Socket::TIPC qw(SOCK_RDM TIPC_NODE_SCOPE TIPC_ADDR_NAMESEQ);
+
+Despite supporting all the above constants, please note that some
+effort was made so normal users will never actually need any of
+them.  For instance, in place of the I<SOCK_>* socktypes, you can
+just specify "stream", "dgram", "seqpacket" or "rdm".  In place
+of the I<TIPC_>*I<_SCOPE> defines, given to
+IO::Socket::TIPC::Sockaddr->B<new>() as the I<Scope> parameter, you
+can simply say I<"zone">, I<"cluster"> or I<"node">.
+
+=cut
 
 
 
@@ -463,16 +654,20 @@ my @TIPC_STUFF = ( qw(
 	TIPC_SRC_DROPPABLE TIPC_SUBSCR_TIMEOUT TIPC_SUB_NO_BIND_EVTS
 	TIPC_SUB_NO_UNBIND_EVTS TIPC_SUB_PORTS TIPC_SUB_SERVICE TIPC_SUB_SINGLE_EVT
 	TIPC_TOP_SRV TIPC_WAIT_FOREVER TIPC_WITHDRAWN TIPC_ZONE_SCOPE
+	tipc_addr tipc_zone tipc_cluster tipc_node
 ) );
-my @SOCK_STUFF = ( qw( SOCK_STREAM SOCK_DGRAM SOCK_SEQPACKET SOCK_RDM ) );
+my @SOCK_STUFF = ( qw(
+	SOCK_STREAM SOCK_DGRAM SOCK_SEQPACKET SOCK_RDM
+	MSG_DONTWAIT MSG_PEEK MSG_WAITALL MSG_CTRUNC
+) );
 
 our @EXPORT    = qw();
 our @EXPORT_OK = qw();
 
 our %EXPORT_TAGS = ( 
-	'all'       => [ @TIPC_STUFF, @SOCK_STUFF ],
-	'tipc'      => [ @TIPC_STUFF ],
-	'socktypes' => [ @SOCK_STUFF ],
+	'all'  => [ @TIPC_STUFF, @SOCK_STUFF ],
+	'tipc' => [ @TIPC_STUFF ],
+	'sock' => [ @SOCK_STUFF ],
 );
 Exporter::export_ok_tags('all');
 
@@ -508,7 +703,7 @@ especially to Allan Stephens for patiently testing all of my pathetic,
 bug-ridden alpha releases. :)
 
 Hrm, who else... thanks Larry Wall, thanks Linus Torvalds, etc etc, these
-ACKNOWLEDGEMENTS sections do tend to drone on and on, don't they.
+ACKNOWLEDGEMENTS sections do tend to drone on and on.
 
 
 =head1 COPYRIGHT AND LICENSE

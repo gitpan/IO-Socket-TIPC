@@ -4,7 +4,7 @@ use IO::Socket::TIPC;
 use Test::More;
 BEGIN {
 	eval "use Devel::Leak";
-	plan skip_all => "need Devel::Leak (NOTE: this test is noisy.)" if $@;
+	plan skip_all => "need Devel::Leak (NOTE: Devel::Leak is noisy.)" if $@;
 };
 
 my $tests;
