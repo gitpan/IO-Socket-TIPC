@@ -1,8 +1,1 @@
-* More examples.
-* Support the setsockopt bits mentioned in Programmers_Guide.txt.  Support any
-  other common ones, too.  (See if IO::Socket::INET has any.)  Same with fcntl
-  bits (Blocking?).  Add them to @EXPORT_OK, if they aren't already there.
-* For convenience, we're @EXPORT_OKing the SOCK_STREAM/SOCK_DGRAM/etc defines.
-  We should do the same with the MSG_* bits for send/recv's flags param, too.
-* TIPC->new() should allow being passed Sockaddr objects for the Peer/Local
-  parameters.
+This page left intentionally blank.  I've run out of things to do...

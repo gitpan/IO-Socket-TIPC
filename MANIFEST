@@ -6,8 +6,12 @@ Programmers_Guide.txt
 README
 TIPC.xs
 TODO
-examples/recv.pl
-examples/send.pl
+examples/multicast_msg/README
+examples/multicast_msg/monitor.pl
+examples/multicast_msg/notify.pl
+examples/simple_conn/README
+examples/simple_conn/recv.pl
+examples/simple_conn/send.pl
 fallback/const-c.inc
 fallback/const-xs.inc
 lib/IO/Socket/TIPC.pm
@@ -15,6 +19,7 @@ lib/IO/Socket/TIPC/Sockaddr.pm
 ppport.h
 t/01_constants.t
 t/02_sockaddr.t
+t/03_socket.t
 t/10_sock_dgram.t
 t/11_sock_rdm.t
 t/12_sock_seqpacket.t

@@ -3,14 +3,13 @@ use IO::Socket::TIPC::Sockaddr ':all';
 use strict;
 use Carp;
 use IO::Socket;
-use Switch;
 use Scalar::Util qw(looks_like_number);
 use AutoLoader;
 use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '0.11';
+our $VERSION = '1.00';
 
 =head1 NAME
 
@@ -135,7 +134,7 @@ IO::Socket::TIPC::Sockaddr documentation for details.
 
 =head2 SocketType
 
-This flag is B<required>.  It tells the system what type of socket
+This field is B<required>.  It tells the system what type of socket
 to use.  The following constants will work, if they were imported:
 I<SOCK_STREAM>, I<SOCK_SEQPACKET>, I<SOCK_RDM>, or I<SOCK_DGRAM>.
 Otherwise, you can just use the following text strings: "stream",
@@ -143,17 +142,46 @@ Otherwise, you can just use the following text strings: "stream",
 
 =head2 Listen
 
-This method is only valid for connection-based B<SocketType>s.  Its
+This field is only valid for connection-based B<SocketType>s.  Its
 existence specifies that this is a server socket.  It is common to
 also specify some I<Local>* arguments, so B<new>() can B<bind> your
 shiny new server socket to a well-known name.
 
+=head2 Importance
+
+This field informs the TIPC network stack  of what priority it should
+consider delivering your messages to be.  It corresponds to the 
+I<TIPC_IMPORTANCE> option, from B<setsockopt>.  If you provide this
+field, ->B<new>() will call B<setsockopt> for you to set the value.
+
+Default is I<TIPC_LOW_IMPORTANCE>.  Valid arguments are any of:
+
+  TIPC_LOW_IMPORTANCE
+  TIPC_MEDIUM_IMPORTANCE
+  TIPC_HIGH_IMPORTANCE
+  TIPC_CRITICAL_IMPORTANCE
+
+See Programmers_Guide.txt for details.
+
+
+=head2 ConnectTimeout
+
+This field specifies the B<connect>() timeout, in milliseconds.  If
+you provide this field, ->B<new>() will call B<setsockopt> to set
+the I<TIPC_CONN_TIMEOUT> value on your socket.
+
+See Programmers_Guide.txt for details.
+
+B<Careful>: I<ConnectTimeout> should not be confused with I<Timeout>,
+which is handled internally by IO::Socket and means something else.
+
+
 =head2 Local*
 
-This parameter is valid (and recommended) for all connectionless
-socket types, and for all servers using connection-type sockets.
-The I<Local>* parameter(s) determine which address your socket will
-get B<bind>()ed to.
+This field is valid (and recommended) for all connectionless socket
+types, and for all servers using connection-type sockets.  The
+I<Local>* parameter(s) determine which address your socket will get
+B<bind>()ed to.
 
 Any arguments prefixed with "Local" will be passed to
 IO::Socket::TIPC::Sockaddr->B<new>(), with the "Local" prefix
@@ -166,9 +194,10 @@ B<EXAMPLES> section to see what this stuff looks like.
 
 =head2 Peer*
 
-This parameter is only valid for all clients using connection-type
-sockets, and is required for this case.  The I<Peer>* parameter(s)
-determine which address your socket will get B<connect>()ed to.
+This field is only valid for B<clients> (as opposed to B<servers>)
+using connection-type sockets, and is required for this case.  The
+I<Peer>* parameter(s) determine which address your socket will get
+B<connect>()ed to.
 
 Any arguments prefixed with "Peer" will be passed to
 IO::Socket::TIPC::Sockaddr->B<new>(), with the "Peer" prefix
@@ -222,17 +251,17 @@ sub configure {
 	my $binder         = (scalar keys %local) || (defined $local);
 	$listener = 1 if(exists($$args{Listen}) && $$args{Listen});
 	unless(looks_like_number($$args{SocketType})) {
-		my $fixed = 0;
-		
-		switch($$args{SocketType}) {
-			case /stream/i    { $fixed = 1; $$args{SocketType} = SOCK_STREAM    }
-			case /seqpacket/i { $fixed = 1; $$args{SocketType} = SOCK_SEQPACKET }
-			case /rdm/i       { $fixed = 1; $$args{SocketType} = SOCK_RDM       }
-			case /dgram/i     { $fixed = 1; $$args{SocketType} = SOCK_DGRAM     }
+		my %socket_types = (
+			stream    => SOCK_STREAM,
+			seqpacket => SOCK_SEQPACKET,
+			rdm       => SOCK_RDM,
+			dgram     => SOCK_DGRAM,
+		);
+		if(exists($socket_types{lc($$args{SocketType})})) {
+			$$args{SocketType} = $socket_types{lc($$args{SocketType})};
+		} else {
+			croak "unknown SocketType $$args{SocketType}!";
 		}
-		my $type = $$args{SocketType};
-		croak "unknown SocketType $type!"
-			unless $fixed;
 		$connectionless = 1 if $$args{SocketType} == SOCK_RDM;
 		$connectionless = 1 if $$args{SocketType} == SOCK_DGRAM;
 	}
@@ -249,10 +278,24 @@ sub configure {
 	# unless Sockaddr barfs, of course.
 	$socket->socket(PF_TIPC(), $$args{SocketType}, 0)
 		or croak "Could not create socket: $!";
+
+	# setsockopt/fcntl stuff goes here.
+	if(exists $$args{ConnectTimeout}) {
+		$socket->setsockopt(SOL_TIPC(), TIPC_CONN_TIMEOUT(), $$args{ConnectTimeout})
+			or croak "TIPC_CONN_TIMEOUT: $!";
+	}
+	if(exists $$args{Importance}) {
+		$socket->setsockopt(SOL_TIPC(), TIPC_IMPORTANCE()  , $$args{Importance})
+			or croak "TIPC_IMPORTANCE: $!";
+	}
 	if($binder) {
 		my $baddr;
 		if(defined($local)) {
-			$baddr = IO::Socket::TIPC::Sockaddr->new($local, %local);
+			if(ref($local) && ref($local) eq "IO::Socket::TIPC::Sockaddr") {
+				$baddr = $local;
+			} else {
+				$baddr = IO::Socket::TIPC::Sockaddr->new($local, %local);
+			}
 		} else {
 			$baddr = IO::Socket::TIPC::Sockaddr->new(%local);
 		}
@@ -262,7 +305,11 @@ sub configure {
 	if($connector) {
 		my $caddr;
 		if(defined($peer)) {
-			$caddr = IO::Socket::TIPC::Sockaddr->new($peer, %peer);
+			if(ref($peer) && ref($peer) eq "IO::Socket::TIPC::Sockaddr") {
+				$caddr = $peer;
+			} else {
+				$caddr = IO::Socket::TIPC::Sockaddr->new($peer, %peer);
+			}
 		} else {
 			$caddr = IO::Socket::TIPC::Sockaddr->new(%peer);
 		}
@@ -280,6 +327,8 @@ sub configure {
 my %valid_args = (
 	Listen     => 0,
 	SocketType => 1,
+	Importance => 0,
+	ConnectTimeout    => 0,
 );
 
 sub enforce_required_args {
@@ -332,6 +381,10 @@ IO::Socket::TIPC::Sockaddr object.
 	my $addr = IO::Socket::TIPC::Sockaddr->new("{4242, 100}");
 	$sock->sendto($addr, "Hello there!\n");
 
+The third parameter, I<flags>, defaults to 0 when not specified.  The
+TIPC Programmers_Guide.txt says: "TIPC supports the MSG_DONTWAIT flag
+when sending; all other flags are ignored."
+
 You may have noticed that B<sendto> and the B<send> builtin do more
 or less the same thing with the order of arguments changed.  The main
 reason to use B<sendto> is because you can pass it a
@@ -364,6 +417,11 @@ the received packet (up to $length bytes) in $buffer.
 	my $buffer;
 	my $sender = $sock->recvfrom($buffer, 30);
 	$sock->sendto($sender, "I got your message.");
+
+The third parameter, I<flags>, defaults to 0 when not specified.
+The TIPC Programmers_Guide.txt says: "TIPC supports the MSG_PEEK
+flag when receiving, as well as the MSG_WAITALL flag when receiving
+on a SOCK_STREAM socket; all other flags are ignored."
 
 You may have noticed that B<recvfrom> and the B<recv> builtin do
 more or less the same thing with the order of arguments changed.
@@ -518,7 +576,44 @@ This module does not actually implement an B<accept> method; when you
 call it, you are really just calling the Perl builtin.  See the
 perlfunc manpage for more details.
 
-=cut
+
+=head2 getsockopt(level, optname)
+
+Query a socket option.  For TIPC-level stuff, I<level> should be
+I<SOL_TIPC>.
+
+The TIPC Programmers_Guide.txt says:
+	- TIPC does not currently support socket options for level
+	  SOL_SOCKET, such as SO_SNDBUF.
+	- TIPC does not currently support socket options for level
+	  IPPROTO_TCP, such	as TCP_MAXSEG.  Attempting to get the value
+	  of these options on a SOCK_STREAM	socket returns the value 0.
+
+See B<setsockopt>(), below, for a list of I<SOL_TIPC> options.
+
+
+=head2 setsockopt(level, optname, optval)
+
+Set a socket option.  For TIPC-level stuff, I<level> should be
+I<SOL_TIPC>.
+
+The TIPC Programmers_Guide.txt says:
+	- TIPC does not currently support socket options for level
+	  SOL_SOCKET, such as SO_SNDBUF.
+	- TIPC does not currently support socket options for level
+	  IPPROTO_TCP, such	as TCP_MAXSEG.  Attempting to get the value
+	  of these options on a SOCK_STREAM	socket returns the value 0.
+
+For level I<SOL_TIPC>, the following options are available:
+
+	TIPC_IMPORTANCE
+	TIPC_SRC_DROPPABLE
+	TIPC_DEST_DROPPABLE
+	TIPC_CONN_TIMEOUT
+
+These are documented in detail in Programmers_Guide.txt.  See also,
+->B<new>()'s I<Importance> and I<ConnectTimeout> options.
+
 
 =head1 EXAMPLES
 

@@ -69,7 +69,7 @@ unless(-f 'tipc.h') {
 	print("I'm going to try to find a tipc.h header file.\n");
 	foreach my $poss (@possibilities) {
 		if(defined($poss) && -f "$poss/tipc.h") {
-			print("Hey!  $poss/tipc.h exists, I'll use that.\n");
+			print("Hey, $poss/tipc.h exists, I'll use it.\n");
 			system("cp -vf $poss/tipc.h .");
 			last;
 		} else {
@@ -97,7 +97,6 @@ WriteMakefile(
     VERSION_FROM      => 'lib/IO/Socket/TIPC.pm', # finds $VERSION
     PREREQ_PM         => {
                          Scalar::Util    => 0,
-                         Switch          => 0,
                          },
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/IO/Socket/TIPC.pm', # retrieve abstract from module

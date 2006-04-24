@@ -60,3 +60,11 @@ Revision history for Perl extension IO::Socket::TIPC.
 	- implement ->getpeername() and ->getsockname().
 	- export tipc_addr, tipc_zone, tipc_cluster, tipc_node functions.
 	- the documentation should now be complete.
+
+1.00 Sun Apr 23 20:15:20 PDT 2006
+	- add documentation for getsockopt/setsockopt, and the TIPC specific flags.
+	- add ->new() fields to set TIPC_IMPORTANCE and TIPC_CONN_TIMEOUT before
+	  bind/connect.
+	- remove dependency on Switch.pm.  That seems to have sped things up 300%.
+	- add a multicast example.  Organize examples/.  Document them properly.
+	- tempt fate, release 1.0 - I'm out of features to add, time to fix bugs.

@@ -1,4 +1,4 @@
-IO-Socket-TIPC version 0.01
+IO::Socket::TIPC
 =====================================
 
 This is a TIPC (Transparent Inter-Process Communication) module for perl.  See
@@ -31,7 +31,7 @@ the most important tests will be skipped, and none of the examples will work.
 If you've built TIPC as a module, be sure you've loaded it with the "modprobe"
 command.
 
-The Scalar::Util and Switch perl modules are required.
+The Scalar::Util perl module is required.
 
 In addition to the above, the test suite uses Test::Exception, Test::Pod and
 Devel::Leak.  Without each of these, it will skip a portion of the tests.

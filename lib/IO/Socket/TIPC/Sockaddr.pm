@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Carp;
 use Scalar::Util qw(looks_like_number);
-use Switch;
 use Exporter;
 
 our @ISA = qw(Exporter);
@@ -382,22 +381,18 @@ sub new {
 	if(exists($args{Scope})) {
 		my $scope = $args{Scope};
 		my %valid_scopes = (
-			IO::Socket::TIPC::TIPC_ZONE_SCOPE() => 1,
+			IO::Socket::TIPC::TIPC_ZONE_SCOPE()    => 1,
 			IO::Socket::TIPC::TIPC_CLUSTER_SCOPE() => 1,
-			IO::Socket::TIPC::TIPC_NODE_SCOPE() => 1,
+			IO::Socket::TIPC::TIPC_NODE_SCOPE()    => 1,
+		);
+		my %scope_values = (
+			zone    => IO::Socket::TIPC::TIPC_ZONE_SCOPE(),
+			cluster => IO::Socket::TIPC::TIPC_CLUSTER_SCOPE(),
+			node    => IO::Socket::TIPC::TIPC_NODE_SCOPE(),
 		);
 		unless(exists($valid_scopes{$scope})) {
-			switch($scope) {
-				case 'zone' {
-					$args{Scope} = IO::Socket::TIPC::TIPC_ZONE_SCOPE();
-				}
-				case 'cluster' {
-					$args{Scope} = IO::Socket::TIPC::TIPC_CLUSTER_SCOPE();
-				}
-				case 'node' {
-					$args{Scope} = IO::Socket::TIPC::TIPC_NODE_SCOPE();
-				}
-			}
+			$args{Scope} = $scope_values{lc($scope)}
+				if exists $scope_values{lc($scope)};
 		}
 		$scope = $args{Scope};
 		croak("invalid Scope $scope")
@@ -410,20 +405,14 @@ sub new {
 	return undef unless check_prereqs_for_address_type(\%args);
 	my $sockaddr = _tipc_create();
 	_tipc_fill_common($sockaddr, $args{Scope});
-	switch($args{AddrType}) {
-		my $valid = 0;
-		case 'id' {
-			_tipc_fill_id_pieces($sockaddr, @args{"Ref","Zone","Cluster","Node"});
-			$valid = 1;
-		}
-		case 'name' {
-			_tipc_fill_name($sockaddr, @args{"Type","Instance","Domain"});
-			$valid = 1;
-		}
-		case 'nameseq' {
-			_tipc_fill_nameseq($sockaddr, @args{"Type","Lower","Upper"});
-			$valid = 1;
-		}
+	if($args{AddrType} eq 'id') {
+		_tipc_fill_id_pieces($sockaddr, @args{"Ref","Zone","Cluster","Node"});
+	} elsif($args{AddrType} eq 'name') {
+		_tipc_fill_name($sockaddr, @args{"Type","Instance","Domain"});
+	} elsif($args{AddrType} eq 'nameseq') {
+		_tipc_fill_nameseq($sockaddr, @args{"Type","Lower","Upper"});
+	} else {
+		croak("invalid AddrType $args{AddrType}");
 	}
 	return $sockaddr;
 }
