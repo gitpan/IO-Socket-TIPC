@@ -45,13 +45,15 @@ if(fork()) {
 	);
 	$sock2->sendto($addr1, "Hello there!\n");
 	my $string;
+	# recvfrom works with length specified
 	my $replyaddr = $sock2->recvfrom($string, 13);
 	like($string, qr/Well, hello/, "Client replied to our message");
 } else {
 	# PEER1 process
 	alarm(5);
 	my $string;
-	my $serv = $sock1->recvfrom($string, 13);
+	# recvfrom works without length specified
+	my $serv = $sock1->recvfrom($string);
 	if($string =~ /Hello/) {
 		$sock1->sendto($serv, "Well, hello!\n");
 	}

@@ -9,7 +9,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME
 
@@ -440,6 +440,9 @@ sub recvfrom {
 	# note: the $buffer argument is written to by recv().
 	my ($self, $buffer, $length, $flags) = @_;
 	$flags = 0 unless defined $flags;
+	$length = TIPC_MAX_USER_MSG_SIZE() unless defined $length;
+	croak "how am I supposed to recvfrom() a packet of length 0?"
+		unless $length > 0;
 	my $rv = $self->recv($_[1], $length, $flags);
 	return IO::Socket::TIPC::Sockaddr->new_from_data($rv);
 }

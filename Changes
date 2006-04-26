@@ -68,3 +68,7 @@ Revision history for Perl extension IO::Socket::TIPC.
 	- remove dependency on Switch.pm.  That seems to have sped things up 300%.
 	- add a multicast example.  Organize examples/.  Document them properly.
 	- tempt fate, release 1.0 - I'm out of features to add, time to fix bugs.
+
+1.01 Tue Apr 25 18:04:40 PDT 2006
+	- Complete examples/multicast_msg, add a waitfor.pl.
+	- ->recvfrom()'s length argument now defaults to TIPC_MAX_USER_MSG_SIZE.
