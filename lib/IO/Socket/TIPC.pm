@@ -9,7 +9,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 =head1 NAME
 
@@ -19,8 +19,8 @@ IO::Socket::TIPC - TIPC sockets for Perl
 
 	use IO::Socket::TIPC;
 	my $sock = IO::Socket::TIPC->new(
-		Type => "stream",
-		Peer => "{1000, 100}"
+		SocketType => "stream",
+		Peer       => "{1000, 100}"
 	);
 	die "Could not connect to {1000, 100}: $!\n" unless $sock;
 
