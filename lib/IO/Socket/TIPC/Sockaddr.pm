@@ -23,10 +23,10 @@ endpoints for communication.  They are used in the B<bind>(),
 B<connect>(), B<sendto>() and B<recvfrom>() calls.
 
 Sockaddrs can be broken down into 3 address-types, I<"name">,
-I<"nameseq"> and I<"id">. the I<Programmers_Guide.txt> explains the
-details much better than I ever could, I suggest reading it before
-trying to use this module.  Also, the B<EXAMPLES> section is useful
-for getting a feel for how this module works.
+I<"nameseq"> and I<"id">. the I<Programmers_Guide.txt> (linked to in
+B<REFERENCES>) explains the details much better than I ever could, I suggest
+reading it before trying to use this module.  Also, the B<EXAMPLES> section
+is useful for getting a feel for how this module works.
 
 =cut
 
@@ -430,8 +430,8 @@ sub new_from_data {
 
 B<stringify> returns a string representing the sockaddr.  These
 strings are the same as the ones used in the TIPC documentation,
-see Programmers_Guide.txt.  Depending on the address type, it will
-return something that looks like one of:
+see I<Programmers_Guide.txt> (linked to in B<REFERENCES>).  Depending
+on the address type, it will return something that looks like one of:
 
 	"<1.2.3:4>"        # ID, addr = 1.2.3, ref = 4
 	"{4242, 100}"      # NAME, type = 4242, instance = 100
@@ -863,10 +863,14 @@ Probably many.  Please report any bugs you find to the author.  A TODO file
 exists, which lists known unimplemented and broken stuff.
 
 
-=head1 SEE ALSO
+=head1 REFERENCES
 
-IO::Socket, Socket, IO::Socket::TIPC,
-http://tipc.sf.net/, http://tipc.cslab.ericcson.net/, Programmers_Guide.txt.
+See also:
+
+IO::Socket, Socket, IO::Socket::TIPC, http://tipc.sf.net/.
+The I<Programmers_Guide.txt> is particularly helpful, and is available
+off the SourceForge site.  See http://tipc.sf.net/doc/Programmers_Guide.txt,
+or http://tipc.sf.net/documentation.html.
 
 
 =head1 AUTHOR

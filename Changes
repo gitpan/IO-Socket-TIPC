@@ -1,5 +1,9 @@
 Revision history for Perl extension IO::Socket::TIPC.
 
+1.03 Tue May 10 13:56:00 PDT 2006
+	- Now that Programmers_Guide.txt is on the TIPC website, remove the local
+	  copy, link to the official one.
+
 1.02 Tue May  9 10:35:10 PDT 2006
 	- Changes file should be in reverse order, newest first.
 	- Oops, the SYNOPSIS was wrong in the manpage.  Fix it.

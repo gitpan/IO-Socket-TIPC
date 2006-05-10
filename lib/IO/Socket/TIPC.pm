@@ -9,7 +9,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -76,7 +76,7 @@ the network, and B<recvfrom> to receive replies from a peer in the
 network who sends a packet to your I<Name> (or I<Nameseq>).  You can
 also use I<Nameseq> addressses to send multicast packets to *every*
 peer with a given name.  Please see the I<Programmers_Guide.txt>
-document for more details.
+document (linked in B<REFERENCES>) for more details.
 
 See the B<EXAMPLES> section, for an example of connection-less socket
 use.
@@ -161,7 +161,7 @@ Default is I<TIPC_LOW_IMPORTANCE>.  Valid arguments are any of:
   TIPC_HIGH_IMPORTANCE
   TIPC_CRITICAL_IMPORTANCE
 
-See Programmers_Guide.txt for details.
+See I<Programmers_Guide.txt> (linked in B<REFERENCES>) for details.
 
 
 =head2 ConnectTimeout
@@ -170,7 +170,7 @@ This field specifies the B<connect>() timeout, in milliseconds.  If
 you provide this field, ->B<new>() will call B<setsockopt> to set
 the I<TIPC_CONN_TIMEOUT> value on your socket.
 
-See Programmers_Guide.txt for details.
+See I<Programmers_Guide.txt> (linked in B<REFERENCES>) for details.
 
 B<Careful>: I<ConnectTimeout> should not be confused with I<Timeout>,
 which is handled internally by IO::Socket and means something else.
@@ -382,7 +382,7 @@ IO::Socket::TIPC::Sockaddr object.
 	$sock->sendto($addr, "Hello there!\n");
 
 The third parameter, I<flags>, defaults to 0 when not specified.  The
-TIPC Programmers_Guide.txt says: "TIPC supports the MSG_DONTWAIT flag
+TIPC I<Programmers_Guide.txt> says: "TIPC supports the MSG_DONTWAIT flag
 when sending; all other flags are ignored."
 
 You may have noticed that B<sendto> and the B<send> builtin do more
@@ -419,7 +419,7 @@ the received packet (up to $length bytes) in $buffer.
 	$sock->sendto($sender, "I got your message.");
 
 The third parameter, I<flags>, defaults to 0 when not specified.
-The TIPC Programmers_Guide.txt says: "TIPC supports the MSG_PEEK
+The TIPC I<Programmers_Guide.txt> says: "TIPC supports the MSG_PEEK
 flag when receiving, as well as the MSG_WAITALL flag when receiving
 on a SOCK_STREAM socket; all other flags are ignored."
 
@@ -503,7 +503,7 @@ a new connection, and you're curious who you're talking to.
 
 B<getpeername> doesn't actually return a I<name> sockaddr, it returns
 an I<id>.  Thus, B<getpeerid> is an alias for B<getpeername>, to aid
-readability.  Programmers_Guide.txt has the following comment: The
+readability.  I<Programmers_Guide.txt> has the following comment: The
 use of "name" in getpeername() can be confusing, as the routine does
 not actually return the TIPC names or name sequences that have been
 bound to the peer socket.
@@ -534,7 +534,7 @@ address your peer sees you coming from.  Compare B<getpeername>.
 
 B<getsockname> doesn't actually return a I<name> sockaddr, it returns
 an I<id>.  Thus, B<getsockid> is an alias for B<getsockname>, to aid
-readability.  Programmers_Guide.txt has the following comment: The
+readability.  I<Programmers_Guide.txt> has the following comment: The
 use of "name" in getsockname() can be confusing, as the routine does
 not actually return the TIPC names or name sequences that have been
 bound to the peer socket.
@@ -585,7 +585,7 @@ perlfunc manpage for more details.
 Query a socket option.  For TIPC-level stuff, I<level> should be
 I<SOL_TIPC>.
 
-The TIPC Programmers_Guide.txt says:
+The TIPC I<Programmers_Guide.txt> (linked in B<REFERENCES>) says:
 	- TIPC does not currently support socket options for level
 	  SOL_SOCKET, such as SO_SNDBUF.
 	- TIPC does not currently support socket options for level
@@ -600,7 +600,7 @@ See B<setsockopt>(), below, for a list of I<SOL_TIPC> options.
 Set a socket option.  For TIPC-level stuff, I<level> should be
 I<SOL_TIPC>.
 
-The TIPC Programmers_Guide.txt says:
+The TIPC I<Programmers_Guide.txt> (linked in B<REFERENCES>) says:
 	- TIPC does not currently support socket options for level
 	  SOL_SOCKET, such as SO_SNDBUF.
 	- TIPC does not currently support socket options for level
@@ -614,7 +614,7 @@ For level I<SOL_TIPC>, the following options are available:
 	TIPC_DEST_DROPPABLE
 	TIPC_CONN_TIMEOUT
 
-These are documented in detail in Programmers_Guide.txt.  See also,
+These are documented in detail in I<Programmers_Guide.txt>.  See also,
 ->B<new>()'s I<Importance> and I<ConnectTimeout> options.
 
 
@@ -778,10 +778,15 @@ Probably many.  Please report any bugs you find to the author.  A TODO file
 exists, which lists known unimplemented and broken stuff.
 
 
-=head1 SEE ALSO
+=head1 REFERENCES
 
-IO::Socket, IO::Socket::TIPC::Sockaddr, http://tipc.sf.net/,
-http://tipc.cslab.ericcson.net/, Programmers_Guide.txt.
+See also:
+
+IO::Socket, IO::Socket::TIPC::Sockaddr, http://tipc.sf.net/.
+
+The I<Programmers_Guide.txt> is particularly helpful, and is available
+off the SourceForge site.  See http://tipc.sf.net/doc/Programmers_Guide.txt,
+or http://tipc.sf.net/documentation.html.
 
 
 =head1 AUTHOR
