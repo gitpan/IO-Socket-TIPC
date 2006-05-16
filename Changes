@@ -1,5 +1,11 @@
 Revision history for Perl extension IO::Socket::TIPC.
 
+1.04 Tue May 16 14:27:00 PDT 2006
+	- Document the fact that ->recvfrom() only requires one argument.
+	- Document the fact that ->getsockopt() and ->setsockopt() are really
+	  just the perl builtins, and point to perlfunc.
+	- Minor POD highlighting changes.
+
 1.03 Tue May 10 13:56:00 PDT 2006
 	- Now that Programmers_Guide.txt is on the TIPC website, remove the local
 	  copy, link to the official one.

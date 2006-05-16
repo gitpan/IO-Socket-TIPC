@@ -9,7 +9,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 =head1 NAME
 
@@ -382,8 +382,8 @@ IO::Socket::TIPC::Sockaddr object.
 	$sock->sendto($addr, "Hello there!\n");
 
 The third parameter, I<flags>, defaults to 0 when not specified.  The
-TIPC I<Programmers_Guide.txt> says: "TIPC supports the MSG_DONTWAIT flag
-when sending; all other flags are ignored."
+TIPC I<Programmers_Guide.txt> says: "TIPC supports the I<MSG_DONTWAIT>
+flag when sending; all other flags are ignored."
 
 You may have noticed that B<sendto> and the B<send> builtin do more
 or less the same thing with the order of arguments changed.  The main
@@ -407,7 +407,7 @@ sub sendto {
 }
 
 
-=head2 recvfrom(buffer, length [, flags])
+=head2 recvfrom(buffer [, length [, flags]])
 
 B<recvfrom> is used with connectionless sockets, to receive a message
 from a peer.  It returns a IO::Socket::TIPC::Sockaddr object,
@@ -418,10 +418,13 @@ the received packet (up to $length bytes) in $buffer.
 	my $sender = $sock->recvfrom($buffer, 30);
 	$sock->sendto($sender, "I got your message.");
 
-The third parameter, I<flags>, defaults to 0 when not specified.
-The TIPC I<Programmers_Guide.txt> says: "TIPC supports the MSG_PEEK
-flag when receiving, as well as the MSG_WAITALL flag when receiving
-on a SOCK_STREAM socket; all other flags are ignored."
+The second parameter, I<length>, defaults to I<TIPC_MAX_USER_MSG_SIZE>
+when not specified.  The third parameter, I<flags>, defaults to 0 when
+not specified.
+
+The TIPC I<Programmers_Guide.txt> says: "TIPC supports the I<MSG_PEEK>
+flag when receiving, as well as the I<MSG_WAITALL> flag when receiving
+on a I<SOCK_STREAM> socket; all other flags are ignored."
 
 You may have noticed that B<recvfrom> and the B<recv> builtin do
 more or less the same thing with the order of arguments changed.
@@ -594,6 +597,10 @@ The TIPC I<Programmers_Guide.txt> (linked in B<REFERENCES>) says:
 
 See B<setsockopt>(), below, for a list of I<SOL_TIPC> options.
 
+This module does not actually implement a B<getsockopt> method; when
+you call it, you are really just calling the Perl builtin.  See the
+perlfunc manpage for more details.
+
 
 =head2 setsockopt(level, optname, optval)
 
@@ -616,6 +623,10 @@ For level I<SOL_TIPC>, the following options are available:
 
 These are documented in detail in I<Programmers_Guide.txt>.  See also,
 ->B<new>()'s I<Importance> and I<ConnectTimeout> options.
+
+This module does not actually implement a B<setsockopt> method; when
+you call it, you are really just calling the Perl builtin.  See the
+perlfunc manpage for more details.
 
 
 =head1 EXAMPLES
