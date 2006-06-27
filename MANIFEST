@@ -1,14 +1,13 @@
-.mt-ignore
 Changes
 MANIFEST
 Makefile.PL
-Programmers_Guide.txt
 README
 TIPC.xs
 TODO
 examples/multicast_msg/README
 examples/multicast_msg/monitor.pl
 examples/multicast_msg/notify.pl
+examples/multicast_msg/waitfor.pl
 examples/simple_conn/README
 examples/simple_conn/recv.pl
 examples/simple_conn/send.pl

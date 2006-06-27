@@ -1,5 +1,8 @@
 Revision history for Perl extension IO::Socket::TIPC.
 
+1.05 Tue Jun 27 08:42:00 PDT 2006
+	- add missing (but documented) waitfor.pl example script
+
 1.04 Tue May 16 14:27:00 PDT 2006
 	- Document the fact that ->recvfrom() only requires one argument.
 	- Document the fact that ->getsockopt() and ->setsockopt() are really
