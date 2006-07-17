@@ -79,4 +79,10 @@ if(fork()) {
 BEGIN { $tests += 2 };
 
 
-BEGIN { plan tests => $tests };
+BEGIN {
+	if(`grep ^TIPC /proc/net/protocols`) {
+		plan tests => $tests;
+	} else {
+		plan skip_all => 'you need to modprobe tipc';
+	}
+}

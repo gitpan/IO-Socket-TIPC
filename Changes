@@ -1,5 +1,9 @@
 Revision history for Perl extension IO::Socket::TIPC.
 
+1.06 Mon Jul 17 11:15:35 PDT 2006
+	- 03_socket.t skips if kernel doesn't support TIPC.  (The other tests
+	  already checked this.)
+
 1.05 Tue Jun 27 08:42:00 PDT 2006
 	- add missing (but documented) waitfor.pl example script
 
