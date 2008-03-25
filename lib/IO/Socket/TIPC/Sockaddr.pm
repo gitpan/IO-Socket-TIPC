@@ -241,7 +241,7 @@ advertise the name/nameseq, to the rest of the network.  The default
 is I<TIPC_NODE_SCOPE>.
 
 If the right constants were imported, you can pass the following
-arguments: I<TIPC_ZONE_SCOPE>, I<TIPC_CLUSTER_SCOPEE>, or
+arguments: I<TIPC_ZONE_SCOPE>, I<TIPC_CLUSTER_SCOPE>, or
 I<TIPC_NODE_SCOPE>.  Otherwise, you can just say I<"zone">,
 I<"cluster"> or I<"node">, which will work equally well.
 

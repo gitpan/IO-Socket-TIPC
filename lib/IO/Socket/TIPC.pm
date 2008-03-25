@@ -9,7 +9,7 @@ use Exporter;
 
 our @ISA = qw(Exporter IO::Socket);
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 =head1 NAME
 
@@ -629,6 +629,25 @@ you call it, you are really just calling the Perl builtin.  See the
 perlfunc manpage for more details.
 
 
+=head2 detect()
+
+B<detect> determines whether TIPC is usable on your system.  It will
+return a true value if it detects TIPC support has been loaded into
+your operating system kernel, and will return 0 otherwise.
+
+=cut
+
+sub detect {
+    if($^O eq 'linux') {
+        return 1 if `grep -c ^TIPC /proc/net/protocols` == 1;
+    }
+    elsif($^O eq 'solaris') {
+        return 1 if `modinfo -c | grep -w tipc | grep -cv UNLOADED` == 1;
+    }
+    return 0;
+}
+
+
 =head1 EXAMPLES
 
 Examples of connection-based socket use:
@@ -816,8 +835,8 @@ bringing TIPC to linux, and making all of this possible.  And thanks
 especially to Allan Stephens for patiently testing all of my pathetic, 
 bug-ridden alpha releases. :)
 
-Hrm, who else... thanks Larry Wall, thanks Linus Torvalds, etc etc, these
-ACKNOWLEDGEMENTS sections do tend to drone on and on.
+Thanks to Renaud Metrich and Sun Microsystems for bringing TIPC to Solaris,
+and testing even more of my pathetic, bug-ridden patches.
 
 
 =head1 COPYRIGHT AND LICENSE

@@ -1,23 +1,31 @@
 use 5.006002;
 use ExtUtils::MakeMaker;
 
-# FIXME: Blatant linuxism (for now).  Tell CPANPLUS (and everyone else) right
-# up-front that this module only works on Linux.
+# Tell CPANPLUS (and everyone else) right up-front that this module only works
+# on selected platforms.
+
+my %supported_platforms = ( # capitalized the way they appear in $^O
+    "linux"   => 1,
+    "solaris" => 1,
+);
+
 # The string "No support for os" is a CPANPLUS hint that it shouldn't send me
 # irrelevant test failures for unsupported platforms.
+
 die("No support for os: $^O\n".
-    "Yet.  For the moment, TIPC only seems to exist on Linux.\n")
-     unless $^O eq "linux";
+    "Yet.  For the moment, TIPC only seems to exist on Linux and Solaris.\n")
+     unless exists($supported_platforms{$^O});
 
 # Now we get to try to find tipc.h.
-# The kernel's tipc.h likes to include linux/types.h, so somewhere along the
-# line, our include path needs to have a linux/types.h in it.  The tipc.h from
-# tipc-1.5.10.tar.gz also includes linux/skbuff.h, in addition to
+# The Linux kernel's tipc.h likes to include linux/types.h, so somewhere along
+# the line, our include path needs to have a linux/types.h in it.  The tipc.h
+# from tipc-1.5.10.tar.gz also includes linux/skbuff.h, in addition to
 # linux/types.h.  However, this doesn't necessarily have to be the same
 # version of linux as the one we pulled tipc.h from, and both types.h and
 # skbuff.h are very commonly found in /usr/include/linux/.  And neither tipc.h
-# file has any other external dependencies.  All of this means several
-# important things for us:
+# file has any other external dependencies.  And I'd assume the Solaris tipc.h
+# doesn't depend on any Linux stuff.  All of this means several important
+# things for us:
 # 
 # * we can find any tipc.h file in either the tipc-addon sources or the linux
 #   kernel sources, or even the standard /usr/include fare, and use it without
@@ -56,6 +64,7 @@ unless(-f 'tipc.h') {
 		"/lib/modules/$uname_r/source/include/linux",
 		"/usr/src/linux/include/linux",
 		"/usr/include/linux",
+		"/opt/SUNWtipc/include/solaris",
 	);
 	if(exists($ENV{PATH_TO_TIPC})) {
 		unshift(@possibilities, $ENV{PATH_TO_TIPC} . "/include/net/tipc");
@@ -70,7 +79,7 @@ unless(-f 'tipc.h') {
 	foreach my $poss (@possibilities) {
 		if(defined($poss) && -f "$poss/tipc.h") {
 			print("Hey, $poss/tipc.h exists, I'll use it.\n");
-			system("cp -vf $poss/tipc.h .");
+			system("cp -f $poss/tipc.h .");
 			last;
 		} else {
 			print("$poss/tipc.h does not exist...\n") if defined $poss;
@@ -78,17 +87,20 @@ unless(-f 'tipc.h') {
 	}
 	
 	print("\n");
-	# I know the first line of this die() message looks a bit weird.
+	# I know the first line of this die() message looks a bit awkward.
 	# The string "OS unsupported" is another one of those CPANPLUS hints,
 	# telling it not to send me irrelevant test-fail messages for boxes
 	# which are missing tipc.h.
 	# Hey, it was either this or "No library found for -l<libname>"...
-	die "This version of your OS unsupported - get a kernel with TIPC support,\n".
-	    "or download the addon package from tipc.sourceforge.net.\n".
-	    "If you're using the addon package, try telling me where to find it:\n".
-	    "PATH_TO_TIPC=/home/user/tipc-1.5.10 perl Makefile.PL\n".
-	    "Alternately, if you're using CONFIG_TIPC in newer Linux kernels:\n".
-	    "PATH_TO_LINUX=/usr/src/linux-2.6.16 perl Makefile.PL\n"
+	die "This version of your OS unsupported - get a kernel with TIPC support,\n"
+	   ."or download the addon package from tipc.sourceforge.net.\n"
+	   ."* If you're using the Linux addon package, try telling me where to find it:\n"
+	   ."  PATH_TO_TIPC=/home/user/tipc-1.5.10 perl Makefile.PL\n"
+	   ."* Alternately, if you're using CONFIG_TIPC in newer Linux kernels:\n"
+	   ."  PATH_TO_LINUX=/usr/src/linux-2.6.16 perl Makefile.PL\n"
+	   ."* Solaris users get TIPC support by installing the addon package from\n"
+	   ."  http://opensolaris.org/os/project/tipc/ - this will install tipc.h\n"
+	   ."  in the right place for you.\n"
 	    	unless -f 'tipc.h';
 }
 

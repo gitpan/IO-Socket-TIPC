@@ -4,7 +4,7 @@ use IO::Socket::TIPC ':all';
 use Test::More;
 my $tests;
 BEGIN { $tests = 0 };
-BEGIN { use_ok('Test::Exception'); }
+eval { use Test::Exception };
 my $test_exception_loaded = defined($Test::Exception::VERSION);
 
 
@@ -80,9 +80,9 @@ BEGIN { $tests += 2 };
 
 
 BEGIN {
-	if(`grep ^TIPC /proc/net/protocols`) {
+	if(IO::Socket::TIPC->detect()) {
 		plan tests => $tests;
 	} else {
-		plan skip_all => 'you need to modprobe tipc';
+		plan skip_all => 'you need to load the tipc module';
 	}
 }

@@ -1,5 +1,11 @@
 Revision history for Perl extension IO::Socket::TIPC.
 
+1.07 Tue Mar 25 06:39:12 PDT 2008
+	- support the Solaris TIPC stack, thanks to Renaud Metrich
+    - update documentation accordingly
+	- add a ->detect() method with some OS-specific runtime checks
+	- resolve some weird test failures regarding "use_ok" in Test::Simple 0.78
+
 1.06 Mon Jul 17 11:15:35 PDT 2006
 	- 03_socket.t skips if kernel doesn't support TIPC.  (The other tests
 	  already checked this.)

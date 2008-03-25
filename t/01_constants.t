@@ -12,7 +12,7 @@ my $tests;
 
 BEGIN { $tests = 0; };
 
-BEGIN { use_ok('IO::Socket::TIPC', ':all'); };
+use IO::Socket::TIPC ':all';
 
 # These function calls must not die.  They will return undef if tipc.h doesn't
 # define them, and that's fine, but they have to at least be callable.
@@ -49,6 +49,9 @@ BEGIN {
 	if($defined) {
 		plan tests => $tests;
 	} else {
-		plan skip_all => "Are you missing linux/tipc.h?";
+	    # something is seriously wrong; report a simpler error message.
+		plan tests => 1;
+		ok(0, "No AF_TIPC.  Are you missing tipc.h?");
+		exit;
 	}
 };

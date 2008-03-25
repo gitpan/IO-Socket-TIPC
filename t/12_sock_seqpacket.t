@@ -119,9 +119,9 @@ BEGIN { $tests += 3; }
 
 
 BEGIN {
-	if(`grep ^TIPC /proc/net/protocols`) {
+    if(IO::Socket::TIPC->detect()) {
 		plan tests => $tests;
 	} else {
-		plan skip_all => 'you need to modprobe tipc';
+        plan skip_all => 'you need to load the tipc module';
 	}
 }

@@ -2,10 +2,10 @@ use strict;
 use warnings;
 use IO::Socket::TIPC ':all';
 use Test::More;
-BEGIN { use_ok('Test::Exception'); }
 my $tests;
 BEGIN { $tests = 0 };
 
+eval { use Test::Exception };
 my $test_exception_loaded = defined($Test::Exception::VERSION);
 
 ## NAME
