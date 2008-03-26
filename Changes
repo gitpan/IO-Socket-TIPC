@@ -1,8 +1,11 @@
 Revision history for Perl extension IO::Socket::TIPC.
 
+1.08 Wed Mar 26 05:09:33 PDT 2008
+	- fix testsuite's Test::Exception detection (again)
+
 1.07 Tue Mar 25 06:39:12 PDT 2008
 	- support the Solaris TIPC stack, thanks to Renaud Metrich
-    - update documentation accordingly
+	- update documentation accordingly
 	- add a ->detect() method with some OS-specific runtime checks
 	- resolve some weird test failures regarding "use_ok" in Test::Simple 0.78
 

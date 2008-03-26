@@ -4,7 +4,7 @@ use IO::Socket::TIPC ':all';
 use Test::More;
 my $tests;
 BEGIN { $tests = 0 };
-eval { use Test::Exception };
+eval "use Test::Exception;";
 my $test_exception_loaded = defined($Test::Exception::VERSION);
 
 

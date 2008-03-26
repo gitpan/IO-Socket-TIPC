@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                IO-Socket-TIPC
-version:             1.07
+version:             1.08
 abstract:            TIPC sockets for Perl
 license:             ~
 author:              
